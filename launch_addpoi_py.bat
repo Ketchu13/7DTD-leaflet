@@ -1,4 +1,4 @@
-:: Usage: 
+::Addpoi Usage: 
 ::    -i "127.0.0.1":			The server ip.
 ::    -p 8081:				The server port number.
 ::    -z "CHANGEME":			The server password.
