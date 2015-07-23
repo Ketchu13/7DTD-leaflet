@@ -50,12 +50,13 @@ You can add poi on the Leaflet map with the kfp_addpoi.py script
 	Usage
 	===========
 	``` 
-	::    -i "127.0.0.1":			The server ip.
-	::    -p 8081:				The server port number.
-	::    -z "CHANGEME":			The server password.
-	::    -w "C:\...\POIwhitelist.xml":	Authorized users list path.
-	::    -k "C:\...\POIList.xml":		POI list xml.
-	::    -v 1:				Display received data (0=False, 1=True).	```
+	    -i "127.0.0.1":			The server ip.
+	    -p 8081:				The server port number.
+	    -z "CHANGEME":			The server password.
+	    -w "C:\...\POIwhitelist.xml":	Authorized users list path.
+	    -k "C:\...\POIList.xml":		POI list xml.
+	    -v 1:				Display received data (0=False, 1=True).
+	```
 
 ```bash
 kfp_addpoi.py -i "127.0.0.1" -p 8081 -z CHANGEME -w "C:\Users\ketchu13\7dtd_www\adm\POIwhitelist.xml" -k "C:\Users\ketchu13\7dtd_www\leaflet\POIList.xml" -v 1
