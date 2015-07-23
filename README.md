@@ -49,7 +49,7 @@ You can add poi on the Leaflet map with the kfp_addpoi.py script
 
 	Usage
 	===========
-	``` 
+	```bash
 	    -i "127.0.0.1":			The server ip.
 	    -p 8081:				The server port number.
 	    -z "CHANGEME":			The server password.
