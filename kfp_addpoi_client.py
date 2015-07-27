@@ -35,11 +35,15 @@ import re
 import os
 import threading
 import time
- 
+import signal
+import sys
 
 sIp = 'localhost'
 sPort = 8081
- 
+
+
+
+   
 class ThreadReception(threading.Thread):
     def __init__(self, conn,fen):
         threading.Thread.__init__(self)
@@ -78,21 +82,19 @@ class ThreadReception(threading.Thread):
     def addPoi(self,x,psdR,sid,poiName,loc,sock):
          try:
              if self.writePoi(x,psdR,sid,poiName,loc):
-                 print 'Poi \"' + poiName + '\" added by ' + psdR
+                 self.a.updatePoi('Poi \"' + poiName + '\" added by ' + psdR)
                  self.a.sendAllData('say \"[00FF00]' + psdR +', Poi Name: ' + poiName + ' added successfully.\"\n')
              else:
-                 print 'Poi \"' + poiName + '\" non added. Error... Requested by ' + psdR
+                 self.a.updatePoi('Poi \"' + poiName + '\" non added. Error... Requested by ' + psdR)
                  self.a.sendAllData('say \"[00FF00]' + psdR +', error during reading or writing data. Contact an admin.\"\n')
          except IOError:
              print "error"        
         
     def run(self):
-        print "e" + settings['wLPath']
         sPass = settings['sPass']
         sIp = settings['sIp']
         sPort = settings['sPort']
         wLPath = str(settings['wLPath'])
-        print wLPath
         alwd = False
         adp = False
         verbose = bool(settings['verbose'])
@@ -100,6 +102,7 @@ class ThreadReception(threading.Thread):
         poiName = None
         poiPath = settings['poiPath']
         listUsers = []
+        
         loc = None
         ap = '/addpoi '
         tfd = [" joined the game", " left the game", " killed player"]
@@ -145,7 +148,7 @@ class ThreadReception(threading.Thread):
                                      else:
                                          self.a.updatePoi('Bad Poi name requested by '+psdRPOI)
                                          self.a.sendAllData('say \"[FF0000]' + psdRPOI +', The Poi Name must contain between 3 and 25 alphanumerics characters .\"')
-                             elif ". id=" in  s and adp:
+                             elif ". id=" in s:
                                  sid = ""
                                  fg = s[:s.find('. id=')]
                                  i = s.find(', ')
@@ -154,40 +157,172 @@ class ThreadReception(threading.Thread):
                                  listUsers.remove(psd)
                                  listUsers.insert(int(fg), psd)                                
                                  self.a.listUsers(listUsers)
-                                 if psdR == psd and not psdR == None:
-                                     adp = False
-                                     # gId = s[s.find('. id=')+5:i]
-                                     # print "gameId: " + gId
-                                     l = s.find('steamid=')
-                                     sid = s[l+8:s.find(',',l)]
-                                     locTp = s[j+7:]
-                                     loc = locTp[:locTp.find('), rot')].split(', ')
-                                     t = ET.parse(wLPath)
-                                     r = t.getroot()
-                                     for u in r.findall('user'):
-                                         if u.get('steamId') == sid and u.get('rank') >= '1' and u.get('allowed') == '1':
-                                             self.addPoi(poiPath,psdR,sid,poiName,loc,sock)
-                                         else:
-                                             self.a.updatePoi( 'Bad user \"' + psdR + '\" steamId: ' + sid)
-                                             self.a.sendAllData('say \"[FF0000]' + psdRPOI +', your are not allowed to add a poi.\"')
-                             elif ". id=" in s:
-                                 sid = ""
-                                 fg = s[:s.find('. id=')]
-                                 i = s.find(', ')
-                                 j = s.find(', pos=(')
-                                 psd = s[i+2:j]
-                                 listUsers.insert(int(fg), psd)                               
-                                 self.a.listUsers(listUsers)                                 
-                                 # gId = s[s.find('. id=')+5:i]
-                                 # print "gameId: " + gId
+                                 gId = s[s.find('. id=')+5:i]
                                  l = s.find('steamid=')
                                  sid = s[l+8:s.find(',',l)]
                                  locTp = s[j+7:]
                                  loc = locTp[:locTp.find('), rot')].split(', ')
+                                 if adp:
+                                     if psdR == psd and not psdR == None:
+                                         adp = False
+                                         t = ET.parse(wLPath)
+                                         r = t.getroot()
+                                         for u in r.findall('user'):
+                                             if u.get('steamId') == sid and u.get('rank') >= '1' and u.get('allowed') == '1':
+                                                 self.addPoi(poiPath,psdR,sid,poiName,loc,sock)
+                                             else:
+                                                 self.a.updatePoi( 'Bad user \"' + psdR + '\" steamId: ' + sid)
+                                                 self.a.sendAllData('say \"[FF0000]' + psdRPOI +', your are not allowed to add a poi.\"')
+                                                             
+                                 
         print u"Client arrêté. connexion interrompue."
         self.sock.close()
- 
-class fenetre(threading.Thread):    
+""" HTTP SERVER """       
+class httpServer(threading.Thread):
+    """ Class describing a simple HTTP server objects."""
+   
+    def __init__(self,self1):
+         """ Constructor """
+         threading.Thread.__init__(self)
+         self.host = ''   # <-- works on all avaivable network interfaces
+         self.port = 8084
+         
+         self.www_dir = '.' # Directory where webpage files are stored
+         self.self1 = self1   
+  
+    def run(self):
+         """ Attempts to aquire the socket and launch the server """ 
+         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+         try: # user provided in the __init__() port may be unavaivable
+             self.self1.updateHTTP("Launching HTTP server on " + self.host +  ":" + str(self.port))
+             self.socket.bind((self.host, self.port)) 
+             
+         except Exception as e:             
+             # store to user provideed port locally for later (in case 8080 fails)
+             user_port = self.port
+             ub = False             
+             while not ub:
+                 self.self1.updateHTTP("Warning: Could not aquite port: " + str(self.port) + "\n")
+                 self.self1.updateHTTP("I will try a higher port")
+                 self.port = self.port+1
+                 try:
+                     self.self1.updateHTTP("Launching HTTP server on " + self.host +  ":" + str(self.port))
+                     self.socket.bind((self.host, self.port))
+                     ub = True
+                 except Exception as e:
+                     self.self1.updateHTTP("ERROR: Failed to acquire sockets for ports " + str(self.port))
+
+                
+         self.self1.updateHTTP("Server successfully acquired the socket with port: " + str(self.port))
+         self.self1.updateHTTP("Press Ctrl+C to shut down the server and exit.")
+         self._wait_for_connections()
+      
+    def shutdown(self):   
+         """ Shut down the server """
+         try:
+             self.self1.updateHTTP("Shutting down the server")
+             self.socket.shutdown(socket.SHUT_RDWR)
+             
+         except Exception as e:
+             self.self1.updateHTTP("Warning: could not shut down the socket. Maybe it was already closed? " + str(e))
+      
+         
+    def _gen_headers(self,  code):
+         """ Generates HTTP response Headers. Ommits the first line! """         
+         # determine response code
+         h = ''
+         if (code == 200):
+            h = 'HTTP/1.1 200 OK\n'
+         elif(code == 404):
+            h = 'HTTP/1.1 404 Not Found\n'         
+         # write further headers
+         current_date = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime()) 
+         h += 'Date: ' + current_date +'\n'
+         h += 'Server: KFP-Python-HTTP-Server\n'
+         h += 'Connection: close\n\n'  # signal that the conection wil be closed after complting the request
+         return h
+
+    def _wait_for_connections(self):
+         """ Main loop awaiting connections """
+         while True:
+             self.self1.updateHTTP("Awaiting New connection")
+             self.socket.listen(3) # maximum number of queued connections
+             
+             conn, addr = self.socket.accept()
+             # conn - socket to client
+             # addr - clients address
+             
+             self.self1.updateHTTP("Got connection from:" + str(addr))
+             
+             data = conn.recv(1024) #receive data from client
+             string = bytes.decode(data) #decode it to string
+             
+             #determine request method  (HEAD and GET are supported)
+             request_method = string.split(' ')[0]
+             self.self1.updateHTTP ("Method: " +  request_method)
+             self.self1.updateHTTP("Request body: " + string.split('\n')[0])
+             
+             #if string[0:3] == 'GET':
+             if (request_method == 'GET') | (request_method == 'HEAD'):
+                 #file_requested = string[4:]
+
+                 # split on space "GET /file.html" -into-> ('GET','file.html',...)
+                 file_requested = string.split(' ')
+                 file_requested = file_requested[1] # get 2nd element
+        
+                 #Check for URL arguments. Disregard them
+                 file_requested = file_requested.split('?')[0]  # disregard anything after '?'
+         
+                 if (file_requested == '/'):  # in case no file is specified by the browser
+                     file_requested = '/index.html' # load index.html by default
+                 
+
+                 file_requested = self.www_dir + file_requested
+                 self.self1.updateHTTP("Serving web page [" + file_requested + "]")
+
+                 ## Load file content
+                 try:
+                     file_handler = open(file_requested,'rb')
+                     if (request_method == 'GET'):  #only read the file when GET
+                         response_content = file_handler.read() # read file content                       
+                     file_handler.close()
+                     
+                     response_headers = self._gen_headers( 200)          
+                     
+                 except Exception as e: #in case file was not found, generate 404 page
+                     self.self1.updateHTTP("Warning, file not found. Serving response code 404\n" + str(e))
+                     response_headers = self._gen_headers( 404)
+                 
+                     if (request_method == 'GET'):
+                        response_content = b"<html><body><p>Error 404: File not found</p><p>Python HTTP server</p></body></html>"  
+                     
+
+                 server_response =  response_headers.encode() # return headers for GET and HEAD
+                 if (request_method == 'GET'):
+                     server_response +=  response_content  # return additional conten for GET only
+
+
+                 conn.send(server_response)
+                 self.self1.updateHTTP("Closing connection with client")
+                 conn.close()
+
+             else:
+                 self.self1.updateHTTP("Unknown HTTP request method:", request_method)
+      
+
+
+    def graceful_shutdown(sig, dummy):
+        """ This function shuts down the server. It's triggered
+        by SIGINT signal """
+        s.shutdown() #shut down the server
+        import sys
+        sys.exit(1)
+            
+            
+    def keerunning(self, value):
+        self.keep_running = bool(value)
+    
+class AddPOI_GUI(threading.Thread):    
     def __init__(self):
         
         threading.Thread.__init__(self)        
@@ -195,11 +330,13 @@ class fenetre(threading.Thread):
         self.th_R = ThreadReception(sock,self)
         self.rootM = Tk()
         self.rootM.configure(bg='black')
-        self.tabPage=TabbedPageSet(self.rootM, page_names=['Logs','AddPoi','POIList.xml', 'WhiteList'],bg="#000000", n_rows=0, expand_tabs=True,)
+        self.rootM.title="ZBot lite py"
+        self.tabPage=TabbedPageSet(self.rootM, page_names=['Logs','AddPoi','POIList.xml', 'WhiteList', 'HTTP_Server'],bg="#000000", n_rows=0, expand_tabs=True,)
         self.tabPage.pages['Logs'].frame.configure(bg="#000000")
         self.tabPage.pages['AddPoi'].frame.configure(bg="#000000")
         self.tabPage.pages['POIList.xml'].frame.configure(bg="#000000")
         self.tabPage.pages['WhiteList'].frame.configure(bg="#000000")
+        self.tabPage.pages['HTTP_Server'].frame.configure(bg="#000000")
         self.label1=Label(self.tabPage.pages['Logs'].frame,bg="#000000",fg="#ff0000",borderwidth=1,text="Server IP: ",)
         self.label2=Label(self.tabPage.pages['Logs'].frame,bg="#000000",fg="#ff0000",text="Server Port: ",)
         self.label3=Label(self.tabPage.pages['Logs'].frame,bg="#000000",fg="#ff0000",text="Server Password:",)
@@ -278,7 +415,7 @@ class fenetre(threading.Thread):
         self.tabPage.pages['POIList.xml'].frame.grid_rowconfigure(2, weight=1, minsize=509, pad=0)
         self.tabPage.pages['POIList.xml'].frame.grid_columnconfigure(1, weight=1, minsize=800, pad=0)
 
-        self.labelwl1=Label(self.tabPage.pages['WhiteList'].frame,bg="#000000",fg="#ff0000",text="POIList.xml source: ", justify=LEFT)
+        self.labelwl1=Label(self.tabPage.pages['WhiteList'].frame,bg="#000000",fg="#ff0000",text="WhiteList: ", justify=LEFT)
         self.textwl1=Text(self.tabPage.pages['WhiteList'].frame,bg="#000000",fg="#ff0000",height=0,width=0,)        
         self.labelwl1.grid(in_=self.tabPage.pages['WhiteList'].frame,column=1,row=1,columnspan=1,ipadx=0,ipady=0,padx=5,pady=0,rowspan=1,sticky="w")
         
@@ -286,6 +423,21 @@ class fenetre(threading.Thread):
         self.tabPage.pages['WhiteList'].frame.grid_rowconfigure(1, weight=0, minsize=15, pad=0)
         self.tabPage.pages['WhiteList'].frame.grid_rowconfigure(2, weight=1, minsize=509, pad=0)
         self.tabPage.pages['WhiteList'].frame.grid_columnconfigure(1, weight=1, minsize=800, pad=0)
+
+        self.labelhl1=Label(self.tabPage.pages['HTTP_Server'].frame,bg="#000000",fg="#ff0000",text="WhiteList: ", justify=LEFT)
+        self.texthl1=Text(self.tabPage.pages['HTTP_Server'].frame,bg="#000000",fg="#ff0000",height=0,width=0,)        
+        self.labelhl1.grid(in_=self.tabPage.pages['HTTP_Server'].frame,column=1,row=1,columnspan=1,ipadx=0,ipady=0,padx=5,pady=0,rowspan=1,sticky="w")
+        self.buttonh2=Button(self.tabPage.pages['HTTP_Server'].frame,text="Start HTTP Server",command=self.startHTTPS)        
+        self.buttonh2.grid(in_=self.tabPage.pages['HTTP_Server'].frame,column=2,row=1,columnspan=1,rowspan=1,ipadx=0,ipady=0,padx=5,pady=5,sticky="ew")
+        self.buttonh3=Button(self.tabPage.pages['HTTP_Server'].frame,text="Shutdown HTTP Server",command=self.shutdHTTPS)        
+        self.buttonh3.grid(in_=self.tabPage.pages['HTTP_Server'].frame,column=2,row=2,columnspan=1,rowspan=1,ipadx=0,ipady=0,padx=5,pady=5,sticky="ew")
+        
+        self.texthl1.grid(in_=self.tabPage.pages['HTTP_Server'].frame,column=1,row=2,columnspan=1,ipadx=5,ipady=0,padx=2,pady=0,rowspan=2,sticky="news")
+        self.tabPage.pages['HTTP_Server'].frame.grid_rowconfigure(1, weight=0, minsize=15, pad=0)
+        self.tabPage.pages['HTTP_Server'].frame.grid_rowconfigure(2, weight=1, minsize=509, pad=0)
+        
+        self.tabPage.pages['HTTP_Server'].frame.grid_columnconfigure(1, weight=1, minsize=800, pad=0)
+        self.tabPage.pages['HTTP_Server'].frame.grid_columnconfigure(2, weight=0, minsize=40, pad=0)
         self.rootM.grid_columnconfigure(1, weight=1, minsize=200, pad=0)
         self.rootM.grid_rowconfigure(1, weight=1, minsize=200, pad=0)
         print settings['wLPath'] 
@@ -308,7 +460,13 @@ class fenetre(threading.Thread):
         self.text1.config(state=NORMAL)
         self.text1.insert('end', time.strftime("%X")+ " - " + s + '\n')
         self.text1.config(state=DISABLED)
-        self.text1.see(END) 
+        self.text1.see(END)
+        
+    def updateHTTP(self,value):        
+        self.texthl1.config(state=NORMAL)
+        self.texthl1.insert('end', time.strftime("%X")+ " - " + value + '\n')
+        self.texthl1.config(state=DISABLED)
+        self.texthl1.see(END)
         
     def updatePoi(self,value):
         self.textp1.config(state=NORMAL)
@@ -327,6 +485,12 @@ class fenetre(threading.Thread):
             self.update('Thread actif: ' + str(threading.active_count()))
             for th in threading.enumerate():
                 self.update(str(th))
+        elif self.entry_1.get()[:12] == 'add poiuser ':
+            print 'add ' + self.entry_1.get()[12:]
+            s = self.entry_1.get()[12:]
+            s1 = s.split(' ')
+            for s2 in s1:
+                print s2
         else:
             self.sendAllData(self.entry_1.get())        
         
@@ -352,8 +516,19 @@ class fenetre(threading.Thread):
                  self.textwl1.config(state=DISABLED)
                  self.textwl1.see(END)
                  return s
-        except IOError:
-             print "error"
+        except IOError as e:
+             self.textwl1.config(state=NORMAL)
+             self.textwl1.delete(1.0,END)
+             self.textwl1.insert(END, str(e))
+             self.textwl1.config(state=DISABLED)
+             self.textwl1.see(END)
+    def startHTTPS(self):
+        self.th_Http = httpServer(self)        
+        self.th_Http.start()
+       
+    def shutdHTTPS(self):
+        self.th_Http.join()
+        
     def connect(self):        
         global sock        
         self.button1.configure(text='Disconnect', command=self.send_FIN)
@@ -364,9 +539,9 @@ class fenetre(threading.Thread):
         sock.connect(sAddress)
         self.update(u'Connexion établie avec le serveur.')
         self.th_R = ThreadReception(sock,self)
-        self.th_R.start()        
-        #def run(self):         
-        
+        self.th_R.start()      
+                
+      
 class sendData(threading.Thread):
     def __init__(self, sock, value):
         threading.Thread.__init__(self)
@@ -375,8 +550,13 @@ class sendData(threading.Thread):
     def run(self):
         self.sock.send(self.value + '\n' ) 
 
+def simple_script(self):   
+   print 'simple_script'
+   print self
+   
+   
 def main():
-    global sAddress, sip, sPort,sPass,wLPath,poiPath,verbose, settings
+    global sAddress, sip, sPort,sPass,wLPath,poiPath,verbose, settings, fen
     sPass = None
     sIp = None
     sPort = None
@@ -422,7 +602,8 @@ def main():
         exit(-1)
 
     if settings['wLPath'] is None:# Show gui to select poi whitelist folder
-        settings['wLPath'] = self.selFile({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),"title": "Choose the Whiteliste that contain autorised users infos."})
+        settings['wLPath'] = self.selFile({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
+                                           "title": "Choose the Whiteliste that contain autorised users infos."})
 
     if len(settings['wLPath']) == 0:
         print "You must define the leaflet users whitelist."
@@ -437,8 +618,9 @@ def main():
         exit(-1)
         
     sAddress = (settings['sIp'], int(settings['sPort']))
-    fen = fenetre()
+    fen = AddPOI_GUI()
     fen.start()
+
     
 if __name__ == "__main__":
     main()
