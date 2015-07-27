@@ -61,7 +61,7 @@ Addpoi Usage
 ```bash
 kfp_addpoi.py -i "127.0.0.1" -p 8081 -z CHANGEME -w "C:\Users\ketchu13\7dtd_www\adm\POIwhitelist.xml" -k "C:\Users\ketchu13\7dtd_www\leaflet\POIList.xml" -v 1
 ```
-https://photos-1.dropbox.com/t/2/AACZ1tQCfOk4XYbJAkrCUTInxMSJOhdvp4CrjvPi5smMkw/12/277527143/png/32x32/1/_/1/2/Capture%20d'%C3%A9cran%202015-07-27%2002.10.08.png/EPP_mYkCGImBAiACKAI/REcHqVHcEs0pNQeyjmL4o3cWwryvEzxZpPnMufcqQ1k?size=1280x960&size_mode=2
+![alt tag](https://raw.github.com/Ketchu13/7DTD-leaflet/master/images/02.08.03.png)
 The content of the file is only showed if you publish the website through a web server.
 You can run simple_server.py to give access on http://localhost:8000 .
 
