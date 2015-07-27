@@ -154,7 +154,8 @@ class ThreadReception(threading.Thread):
                                  i = s.find(', ')
                                  j = s.find(', pos=(')
                                  psd = s[i+2:j]
-                                 listUsers.remove(psd)
+                                 if psd in listUsers:
+                                     listUsers.remove(psd)
                                  listUsers.insert(int(fg), psd)                                
                                  self.a.listUsers(listUsers)
                                  gId = s[s.find('. id=')+5:i]
