@@ -61,6 +61,8 @@ Addpoi Usage
 ```bash
 kfp_addpoi.py -i "127.0.0.1" -p 8081 -z CHANGEME -w "C:\Users\ketchu13\7dtd_www\adm\POIwhitelist.xml" -k "C:\Users\ketchu13\7dtd_www\leaflet\POIList.xml" -v 1
 ```
+Addpoi GUI
+==============
 ![alt tag](https://raw.github.com/Ketchu13/7DTD-leaflet/master/images/screenshots/02.10.08.png)
 The content of the file is only showed if you publish the website through a web server.
 You can run simple_server.py to give access on http://localhost:8000 .
