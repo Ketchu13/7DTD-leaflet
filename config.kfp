@@ -1,0 +1,6 @@
+sIp=127.0.0.1
+sPort=8081
+sPass=CHANGEME
+wLPath=./POIwhitheListe.xml
+poiPath=./POIList.xml
+verbose=1
