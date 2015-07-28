@@ -6,3 +6,4 @@ tiles/
 dist/
 build/
 *.exe
+/BaseHTTPServer_kfp.py
