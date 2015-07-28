@@ -444,6 +444,7 @@ class AddPOI_GUI(threading.Thread):
         print settings['wLPath'] 
         self.readWL(settings['wLPath'])
         self.th_R.readPoi(settings['poiPath'])
+        
         self.rootM.mainloop();
         
     def updatePOIList(self, value):
@@ -481,6 +482,7 @@ class AddPOI_GUI(threading.Thread):
             self.text2.insert(END, user + '\n')        
        
     def send(self):
+        self.rootM.after(6000,self.sendAllData('lp'))
         print self.entry_1.get()[:2]
         if self.entry_1.get()[:2] == 'th':
             self.update('Thread actif: ' + str(threading.active_count()))
