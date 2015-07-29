@@ -220,11 +220,12 @@ class KFP_AddPOI(threading.Thread):
                                  nn2 = ', PlayerID=\''
                                  if nn in s:
                                      steamID = s[s.find(nn2)+len(nn2):s.find('\', OwnerID=\'')]
+                                     mp = self.a.parent.mapR(self.a.parent,steamID)  
+                                     mp.start() 
                                      print steamID                                     
                                  if 'Logon successful.' in d and not loged:
                                      loged = True
-                                     mp = self.a.parent.mapR(self.a.parent,'76561198009609645')  
-                                     mp.start()         
+                                            
                                      print >> sys.stderr, 'Logon successful...'
                                                                   
                                      self.a.sendAllData('lp')
