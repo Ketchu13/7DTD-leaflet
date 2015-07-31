@@ -63,15 +63,13 @@ class KFP_AddPOI(threading.Thread):
         print " -k \"C:\\...\\POIList.xml\":\t\t POI list xml..."
         print " -v \t\t\t\t Show received data (0=False, 1=True)..."
         print " -c \"www\":\t\t The folder that contain your index.html (Optional)"
-        print " -newest Keep track of updates and write the last version of tiles. This will show players bases on map. " 
-        print     "(Optional)"
+        print " -newest Keep track of updates and write the last version of tiles. This will show players bases on map.(Optional)"
 
     def __init__(self,parent):
         threading.Thread.__init__(self)
         global fen
         self.parent = parent
         self.settings = self.parent.settings
-        print self.settings['telnet_server']
 
         if self.settings['wLPath'] is None:  # Show gui to select poi whitelist folder
             self.settings['wLPath'] = self.selFile({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
@@ -93,7 +91,6 @@ class KFP_AddPOI(threading.Thread):
         fen = self.AddPOI_GUI(self)
         fen.start()
 
-   
     class ThreadReception(threading.Thread):
         def __init__(self, conn, fen):
             threading.Thread.__init__(self)
@@ -118,16 +115,14 @@ class KFP_AddPOI(threading.Thread):
 
         def readPoi(self, x):
              try:
-                 print x
                  with open(x, "r") as f:
                      s = ''.join(f.readlines()[:-1])[:-1]
                      if len(s) <= 0:
                          s = '<poilist>\n'
                      self.a.updatePOIList(s)
                      return s
-             except IOError:
-                 print "error"
-
+             except IOError as e:
+                 print ("error", e)
 
         def addPoi(self, x, psdR, sid, poiName, loc, sock):
              try:
@@ -138,8 +133,8 @@ class KFP_AddPOI(threading.Thread):
                      self.a.updatePoi('Poi \"' + poiName + '\" non added. Error... Requested by ' + psdR)
                      self.a.sendAllData('say \"[00FF00]' + psdR + ', error during reading or writing data. Contact an admin.\"\n')
              except IOError:
-                 print "error"        
-            
+                 print ("error", e)
+
         def run(self):
             sPass = self.a.parent.settings['sPass']
             sIp = self.a.parent.settings['sIp']
@@ -152,7 +147,6 @@ class KFP_AddPOI(threading.Thread):
             poiName = None
             poiPath = self.a.parent.settings['poiPath']
             listUsers = []
-            print 'okik'
             loc = None
             ap = '/addpoi '
             tfd = [" joined the game", " left the game", " killed player"]
@@ -161,18 +155,16 @@ class KFP_AddPOI(threading.Thread):
                     s = None
                     s1 = None
                     s2 = None
-                    d = None                
+                    d = None
                     d = self.sock.recv(4096)
                     d = d.decode(encoding='UTF-8', errors='ignore')
                     s1 = d.replace(b'\n', b'')
                     s2 = s1.split(b'\r')
-                    
                     if 'Please enter password:' in d:
                         self.a.update('Connected...\nSending password...')
                         self.a.sendAllData(sPass)
                     else:
                         for s in s2:
-                             print s
                              if len(s) >= 5:
                                  nn = 'Player disconnected: EntityID='
                                  nn2 = ', PlayerID=\''
@@ -180,14 +172,10 @@ class KFP_AddPOI(threading.Thread):
                                      steamID = s[s.find(nn2)+len(nn2):s.find('\', OwnerID=\'')]
                                      mp = self.a.parent.mapR(self.a.parent,steamID)  
                                      mp.start() 
-                                     print steamID                                     
                                  if 'Logon successful.' in d and not loged:
                                      loged = True
-                                            
-                                     print >> sys.stderr, 'Logon successful...'
-                                                                  
                                      self.a.sendAllData('lp')
-                                 elif verbose:                                 
+                                 elif verbose:
                                      self.a.update(s)
                                  if 'GMSG:' in s:  # chat msg
                                      psdRTp = s[s.find('GMSG:') + 6:]
@@ -196,17 +184,14 @@ class KFP_AddPOI(threading.Thread):
                                      for ik in range(0, len(tfd)):
                                          if tfd[ik] in s:
                                              psdRCt = psdRTp[:psdRTp.find(tfd[ik])]
-                                             print tfd[ik]
                                              if ik == 1:
-                                                 print ik
-                                                 
                                                  skip = True
                                      if skip:
-                                         print ''  # TODO gen current user tiles if deco
+                                         self.a.sendAllData('lp')
                                      elif ap in s:
                                          adp = True
                                          self.a.sendAllData('lp')
-                                         psdRPOI = psdRTp[:psdRTp.find(': ')]                                    
+                                         psdRPOI = psdRTp[:psdRTp.find(': ')]
                                          poiName = s[s.find(ap) + len(ap):]
                                          if re.search(r'^[A-Za-z0-9Ü-ü_ \-]{3,25}$', poiName):
                                              self.a.updatePoi('Adding a POI is requested by ' + psdRPOI + ".")
@@ -222,7 +207,7 @@ class KFP_AddPOI(threading.Thread):
                                      psd = s[i + 2:j]
                                      if psd in listUsers:
                                          listUsers.remove(psd)
-                                     listUsers.insert(int(fg), psd)                                
+                                     listUsers.insert(int(fg), psd)
                                      self.a.listUsers(listUsers)
                                      gId = s[s.find('. id=') + 5:i]
                                      l = s.find('steamid=')
@@ -240,34 +225,32 @@ class KFP_AddPOI(threading.Thread):
                                                  else:
                                                      self.a.updatePoi('Bad user \"' + psdR + '\" steamId: ' + sid)
                                                      self.a.sendAllData('say \"[FF0000]' + psdRPOI + ', your are not allowed to add a poi.\"')
-                                                                 
-                                     
             print u"Client arrêté. connexion interrompue."
             self.sock.close()
-    """ HTTP SERVER """       
+    """ HTTP SERVER """
     class httpServer(threading.Thread):
         """ Class describing a simple HTTP server objects."""
-       
+
         def __init__(self, gui):
              """ Constructor """
              threading.Thread.__init__(self)
              self.GUI = gui   
              self.host = ''
-             self.port = 8084         
-             self.www = '.'  # Directory where webpage files are stored
-      
+             self.port = self.GUI.parent.settings['http_server_port']
+             self.www = self.GUI.parent.settings['www']
+
         def run(self):
              """ Attempts to aquire the socket and launch the server """ 
              self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
              try: 
                  self.GUI.updateHTTP("Launching HTTP server on " + self.host + ":" + str(self.port))
-                 self.socket.bind((self.host, self.port))             
-             except Exception as e:            
-                 ub = False             
+                 self.socket.bind((self.host, self.port))
+             except Exception as e:
+                 ub = False
                  while not ub:
                      self.GUI.updateHTTP("Warning: Could not aquite port: " + str(self.port) + "\n")
                      self.GUI.updateHTTP("I will try a higher port")
-                     self.port = self.port + 1
+                     self.port = int(self.port) + 1
                      try:
                          self.GUI.updateHTTP("Launching HTTP server on " + self.host + ":" + str(self.port))
                          self.socket.bind((self.host, self.port))
@@ -275,7 +258,6 @@ class KFP_AddPOI(threading.Thread):
                      except Exception as e:
                          self.GUI.updateHTTP("ERROR: Failed to acquire sockets for ports " + str(self.port))
 
-                    
              self.GUI.updateHTTP("Server successfully acquired the socket with port: " + str(self.port))
              self.GUI.updateHTTP("Press Ctrl+C to shut down the server and exit.")
              self._wait_for_connections()
@@ -288,16 +270,15 @@ class KFP_AddPOI(threading.Thread):
                  
              except Exception as e:
                  self.GUI.updateHTTP("Warning: could not shut down the socket. Maybe it was already closed? " + str(e))
-          
-             
+
         def _gen_headers(self, code):
-             """ Generates HTTP response Headers. Ommits the first line! """         
+             """ Generates HTTP response Headers. Ommits the first line! """
              # determine response code
              h = ''
              if (code == 200):
                 h = 'HTTP/1.1 200 OK\n'
              elif(code == 404):
-                h = 'HTTP/1.1 404 Not Found\n'         
+                h = 'HTTP/1.1 404 Not Found\n'
              # write further headers
              current_date = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime()) 
              h += 'Date: ' + current_date + '\n'
@@ -332,13 +313,12 @@ class KFP_AddPOI(threading.Thread):
                      # split on space "GET /file.html" -into-> ('GET','file.html',...)
                      file_requested = string.split(' ')
                      file_requested = file_requested[1]  # get 2nd element
-            
+
                      # Check for URL arguments. Disregard them
                      file_requested = file_requested.split('?')[0]  # disregard anything after '?'
-             
+
                      if (file_requested == '/'):  # in case no file is specified by the browser
                          file_requested = '/index.html'  # load index.html by default
-                     
 
                      file_requested = self.www + file_requested
                      self.GUI.updateHTTP("Serving web page [" + file_requested + "]")
@@ -347,11 +327,10 @@ class KFP_AddPOI(threading.Thread):
                      try:
                          file_handler = open(file_requested, 'rb')
                          if (request_method == 'GET'):  # only read the file when GET
-                             response_content = file_handler.read()  # read file content                       
+                             response_content = file_handler.read()  # read file content
                          file_handler.close()
-                         
-                         response_headers = self._gen_headers(200)          
-                         
+                         response_headers = self._gen_headers(200)
+
                      except Exception as e:  # in case file was not found, generate 404 page
                          self.GUI.updateHTTP("Warning, file not found. Serving response code 404\n" + str(e))
                          response_headers = self._gen_headers(404)
@@ -364,12 +343,10 @@ class KFP_AddPOI(threading.Thread):
                                     "color: red;"+ \
                                     "background-color:black;\"><h2>KFP ZBot Lite Simple Web Server</h2>"+ \
                                     "<!--div>404 - Not Found</div--></body></html>"  
-                         
 
                      server_response = response_headers.encode()  # return headers for GET and HEAD
                      if (request_method == 'GET'):
                          server_response += response_content  # return additional conten for GET only
-
 
                      conn.send(server_response)
                      self.GUI.updateHTTP("Closing connection with client")
@@ -377,8 +354,6 @@ class KFP_AddPOI(threading.Thread):
 
                  else:
                      self.GUI.updateHTTP("Unknown HTTP request method: " + request_method)
-          
-
 
         def graceful_shutdown(sig, dummy):
             """ This function shuts down the server. It's triggered
@@ -386,15 +361,14 @@ class KFP_AddPOI(threading.Thread):
             s.shutdown()  # shut down the server
             import sys
             sys.exit(1)
-                
-                
+
         def keerunning(self, value):
             self.keep_running = bool(value)
-        
-    class AddPOI_GUI(threading.Thread):    
-        def __init__(self, parent):        
-            threading.Thread.__init__(self)        
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)        
+
+    class AddPOI_GUI(threading.Thread):
+        def __init__(self, parent):
+            threading.Thread.__init__(self)
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.parent = parent
             self.th_R = self.parent.ThreadReception(self.sock, self)
             self.rootM = Tk()
@@ -412,7 +386,7 @@ class KFP_AddPOI(threading.Thread):
             strs1 = StringVar()
             strs2 = StringVar()
             strs3 = StringVar()
-            strs4 = StringVar()        
+            strs4 = StringVar()
             strs1.set(self.parent.parent.settings['sPort'])
             strs2.set(self.parent.parent.settings['sIp'])
             strs3.set(self.parent.parent.settings['sPass'])
@@ -422,18 +396,18 @@ class KFP_AddPOI(threading.Thread):
             self.entry3 = Entry(self.tabPage.pages['Logs'].frame, textvariable=strs3, justify="center", relief="flat", width=0, show="*")
             self.button1 = Button(self.tabPage.pages['Logs'].frame, text="Connect", command=self.connect)
             self.button2 = Button(self.tabPage.pages['Logs'].frame, text="Send", command=self.send)
-            
+
             self.sbar1 = Scrollbar(self.tabPage.pages['Logs'].frame)
             self.sbar2 = Scrollbar(self.tabPage.pages['Logs'].frame)
-            
-            self.text1 = Text(self.tabPage.pages['Logs'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)        
+
+            self.text1 = Text(self.tabPage.pages['Logs'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)
             self.text2 = Text(self.tabPage.pages['Logs'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)
             self.text3 = Text(self.tabPage.pages['Logs'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)
-            
+
             self.entry4 = Entry(self.tabPage.pages['Logs'].frame, textvariable=strs2, justify="center", relief="flat", width=0,)
             self.sbar1.config(command=self.text1.yview)
             self.sbar1.config(command=self.text2.yview)
-            
+
             self.label1.grid(in_=self.tabPage.pages['Logs'].frame, column=1, row=1, columnspan=1, ipadx=0, ipady=0, padx=5, pady=5, rowspan=1, sticky="")
             self.entry4.grid(in_=self.tabPage.pages['Logs'].frame, column=2, row=1, columnspan=1, ipadx=0, ipady=0, padx=5, pady=5, rowspan=1, sticky="ew")
             self.label2.grid(in_=self.tabPage.pages['Logs'].frame, column=3, row=1, columnspan=1, ipadx=0, ipady=0, padx=5, pady=5, rowspan=1, sticky="")
@@ -447,7 +421,7 @@ class KFP_AddPOI(threading.Thread):
             self.sbar2.grid(in_=self.tabPage.pages['Logs'].frame, column=9, row=2, columnspan=1, rowspan=1, ipadx=0, ipady=0, padx=0, pady=5, sticky="nsew")
             self.entry_1.grid(in_=self.tabPage.pages['Logs'].frame, column=1, row=3, columnspan=7, rowspan=1, ipadx=5, ipady=0, padx=2, pady=0, sticky="ew")
             self.button2.grid(in_=self.tabPage.pages['Logs'].frame, column=8, row=3, columnspan=2, rowspan=1, ipadx=0, ipady=0, padx=5, pady=5, sticky="ew")
-            
+
             self.tabPage.grid(in_=self.rootM, column=1, row=1, rowspan=3, columnspan=9, ipadx=5, ipady=0, padx=2, pady=0, sticky="nsew")
             self.entry_1.focus()
             self.entry_1.bind('<Return>', (lambda event: self.send()))
@@ -455,7 +429,6 @@ class KFP_AddPOI(threading.Thread):
             self.tabPage.pages['Logs'].frame.grid_rowconfigure(2, weight=1, minsize=509, pad=0)
             self.tabPage.pages['Logs'].frame.grid_rowconfigure(3, weight=1, minsize=21, pad=0)
 
-            
             self.tabPage.pages['Logs'].frame.grid_columnconfigure(1, weight=1, minsize=40, pad=0)
             self.tabPage.pages['Logs'].frame.grid_columnconfigure(2, weight=1, minsize=220, pad=0)
             self.tabPage.pages['Logs'].frame.grid_columnconfigure(3, weight=1, minsize=76, pad=2)
@@ -467,61 +440,59 @@ class KFP_AddPOI(threading.Thread):
             self.tabPage.pages['Logs'].frame.grid_columnconfigure(9, weight=0, minsize=0, pad=0)
 
             self.labelp1 = Label(self.tabPage.pages['AddPoi'].frame, bg="#000000", fg="#ff0000", text="AddPoi Logs: ", justify=LEFT)
-            self.textp1 = Text(self.tabPage.pages['AddPoi'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)        
+            self.textp1 = Text(self.tabPage.pages['AddPoi'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)
             self.labelp1.grid(in_=self.tabPage.pages['AddPoi'].frame, column=1, row=1, columnspan=1, ipadx=0, ipady=0, padx=5, pady=0, rowspan=1, sticky="w")
             
             self.textp1.grid(in_=self.tabPage.pages['AddPoi'].frame, column=1, row=2, columnspan=1, ipadx=5, ipady=0, padx=2, pady=0, rowspan=2, sticky="news")
             self.tabPage.pages['AddPoi'].frame.grid_rowconfigure(1, weight=0, minsize=15, pad=0)
             self.tabPage.pages['AddPoi'].frame.grid_rowconfigure(2, weight=1, minsize=509, pad=0)
             self.tabPage.pages['AddPoi'].frame.grid_columnconfigure(1, weight=1, minsize=800, pad=0)
-            
+
             self.labelpl1 = Label(self.tabPage.pages['POIList.xml'].frame, bg="#000000", fg="#ff0000", text="POIList.xml source: ", justify=LEFT)
-            self.textpl1 = Text(self.tabPage.pages['POIList.xml'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)        
+            self.textpl1 = Text(self.tabPage.pages['POIList.xml'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)
             self.labelpl1.grid(in_=self.tabPage.pages['POIList.xml'].frame, column=1, row=1, columnspan=1, ipadx=0, ipady=0, padx=5, pady=0, rowspan=1, sticky="w")
-            
+
             self.textpl1.grid(in_=self.tabPage.pages['POIList.xml'].frame, column=1, row=2, columnspan=1, ipadx=5, ipady=0, padx=2, pady=0, rowspan=2, sticky="news")
             self.tabPage.pages['POIList.xml'].frame.grid_rowconfigure(1, weight=0, minsize=15, pad=0)
             self.tabPage.pages['POIList.xml'].frame.grid_rowconfigure(2, weight=1, minsize=509, pad=0)
             self.tabPage.pages['POIList.xml'].frame.grid_columnconfigure(1, weight=1, minsize=800, pad=0)
 
             self.labelwl1 = Label(self.tabPage.pages['WhiteList'].frame, bg="#000000", fg="#ff0000", text="WhiteList: ", justify=LEFT)
-            self.textwl1 = Text(self.tabPage.pages['WhiteList'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)        
+            self.textwl1 = Text(self.tabPage.pages['WhiteList'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)
             self.labelwl1.grid(in_=self.tabPage.pages['WhiteList'].frame, column=1, row=1, columnspan=1, ipadx=0, ipady=0, padx=5, pady=0, rowspan=1, sticky="w")
-            
+
             self.textwl1.grid(in_=self.tabPage.pages['WhiteList'].frame, column=1, row=2, columnspan=1, ipadx=5, ipady=0, padx=2, pady=0, rowspan=2, sticky="news")
             self.tabPage.pages['WhiteList'].frame.grid_rowconfigure(1, weight=0, minsize=15, pad=0)
             self.tabPage.pages['WhiteList'].frame.grid_rowconfigure(2, weight=1, minsize=509, pad=0)
             self.tabPage.pages['WhiteList'].frame.grid_columnconfigure(1, weight=1, minsize=800, pad=0)
 
             self.labelhl1 = Label(self.tabPage.pages['HTTP_Server'].frame, bg="#000000", fg="#ff0000", text="WhiteList: ", justify=LEFT)
-            self.texthl1 = Text(self.tabPage.pages['HTTP_Server'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)        
+            self.texthl1 = Text(self.tabPage.pages['HTTP_Server'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)
             self.labelhl1.grid(in_=self.tabPage.pages['HTTP_Server'].frame, column=1, row=1, columnspan=1, ipadx=0, ipady=0, padx=5, pady=0, rowspan=1, sticky="w")
-            self.buttonh2 = Button(self.tabPage.pages['HTTP_Server'].frame, text="Start HTTP Server", command=self.startHTTPS)        
+            self.buttonh2 = Button(self.tabPage.pages['HTTP_Server'].frame, text="Start HTTP Server", command=self.startHTTPS)
             self.buttonh2.grid(in_=self.tabPage.pages['HTTP_Server'].frame, column=2, row=1, columnspan=1, rowspan=1, ipadx=0, ipady=0, padx=5, pady=5, sticky="ew")
-            self.buttonh3 = Button(self.tabPage.pages['HTTP_Server'].frame, text="Shutdown HTTP Server", command=self.shutdHTTPS)        
+            self.buttonh3 = Button(self.tabPage.pages['HTTP_Server'].frame, text="Shutdown HTTP Server", command=self.shutdHTTPS)
             self.buttonh3.grid(in_=self.tabPage.pages['HTTP_Server'].frame, column=2, row=2, columnspan=1, rowspan=1, ipadx=0, ipady=0, padx=5, pady=5, sticky="ew")
-            
+
             self.texthl1.grid(in_=self.tabPage.pages['HTTP_Server'].frame, column=1, row=2, columnspan=1, ipadx=5, ipady=0, padx=2, pady=0, rowspan=2, sticky="news")
             self.tabPage.pages['HTTP_Server'].frame.grid_rowconfigure(1, weight=0, minsize=15, pad=0)
             self.tabPage.pages['HTTP_Server'].frame.grid_rowconfigure(2, weight=1, minsize=509, pad=0)
-            
+
             self.tabPage.pages['HTTP_Server'].frame.grid_columnconfigure(1, weight=1, minsize=800, pad=0)
             self.tabPage.pages['HTTP_Server'].frame.grid_columnconfigure(2, weight=0, minsize=40, pad=0)
             self.rootM.grid_columnconfigure(1, weight=1, minsize=200, pad=0)
             self.rootM.grid_rowconfigure(1, weight=1, minsize=200, pad=0)
-            print self.parent.parent.settings['wLPath'] 
             self.readWL(self.parent.parent.settings['wLPath'])
             self.th_R.readPoi(self.parent.parent.settings['poiPath'])
-            
             self.rootM.mainloop();
-            
+
         def updatePOIList(self, value):
             self.textpl1.config(state=NORMAL)
             self.textpl1.delete(1.0, END)
             self.textpl1.insert(END, value + '\n' + '</poilist>')
             self.textpl1.config(state=DISABLED)
             self.textpl1.see(END)
-            
+
         def update(self, value):
             if 'INF' in value:
                 s = value[value.find(' INF ') + 5:]
@@ -531,45 +502,43 @@ class KFP_AddPOI(threading.Thread):
             self.text1.insert('end', time.strftime("%X") + " - " + s + '\n')
             self.text1.config(state=DISABLED)
             self.text1.see(END)
-            
+
         def updateHTTP(self, value):        
             self.texthl1.config(state=NORMAL)
             self.texthl1.insert('end', time.strftime("%X") + " - " + value + '\n')
             self.texthl1.config(state=DISABLED)
             self.texthl1.see(END)
-            
+
         def updatePoi(self, value):
             self.textp1.config(state=NORMAL)
             self.textp1.insert('end', time.strftime("%c") + " - " + value + '\n')
             self.textp1.config(state=DISABLED)
-            self.textp1.see(END)        
-            
+            self.textp1.see(END)
+
         def listUsers(self, usersList):
             self.text2.delete(1.0, END)
             for user in usersList:
-                self.text2.insert(END, user + '\n')        
-           
+                self.text2.insert(END, user + '\n')
+
         def send(self):
-            
-            print "e" + self.entry_1.get()[:2] + "e"
             if self.entry_1.get()[:2] == 'th':
                 self.update('Thread actif: ' + str(threading.active_count()))
                 for th in threading.enumerate():
                     self.update(str(th))
-            elif self.entry_1.get()[:12] == 'add poiuser ':
+            elif self.entry_1.get()[:12] == 'add poiuser ':#TODO
                 print 'add ' + self.entry_1.get()[12:]
                 s = self.entry_1.get()[12:]
                 s1 = s.split(' ')
                 for s2 in s1:
                     print s2
             else:
-                self.sendAllData(self.entry_1.get())        
-            
+                self.sendAllData(self.entry_1.get())
+
         def sendAllData(self, value):
             s = self.parent.sendData(self.sock, value)
             s.start()
             s.join()
-            
+
         def send_FIN(self):
             self.button1.configure(text="Connect", command=self.connect)
             self.button2.configure(state='disable')
@@ -596,23 +565,22 @@ class KFP_AddPOI(threading.Thread):
         def startHTTPS(self):
             self.th_Http = self.parent.httpServer(self)
             self.th_Http.start()
-           
+
         def shutdHTTPS(self):
             self.th_Http.join()
-            
+
         def connect(self):
             self.button1.configure(text='Disconnect', command=self.send_FIN)
             self.button2.configure(state='normal')
             self.update('Connecting to ' + self.parent.settings['telnet_server'])
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
             sAdress = (self.entry4.get(), int(self.entry2.get()))
-            print sAdress
             self.sock.connect(sAdress)
             self.update(u'Connexion établie avec le serveur.')
             self.th_R = self.parent.ThreadReception(self.sock, self)
             self.th_R.start()
-            self.rootM.after(6000, self.sendAllData('lp'))
-          
+            self.rootM.after(1000, self.sendAllData('lp'))
+
     class sendData(threading.Thread):
         def __init__(self, sock, value):
             threading.Thread.__init__(self)
@@ -620,10 +588,10 @@ class KFP_AddPOI(threading.Thread):
             self.value = value 
         def run(self):
             self.sock.send(self.value + '\n')
-   
+
     def run(self):
         pass
-    
+
     class mapR(threading.Thread):
         def __init__(self, parent, value):
             threading.Thread.__init__(self)
@@ -633,13 +601,3 @@ class KFP_AddPOI(threading.Thread):
             self.parent.parent.copyMapFile(self.parent.parent.game_player_path, self.value+".map")
             self.parent.parent.map_files = self.parent.parent.read_folder("Map")
             self.parent.parent.create_tiles(self.parent.parent.map_files, self.parent.parent.tile_path, self.parent.parent.tile_zoom, self.parent.parent.store_history)
-                                       
-   
-    
-"""thread_1 = KFP_AddPOI(None)
-thread_1.start()"""
- 
-"""f __name__ == "__main__":
-    main()"""
-
-

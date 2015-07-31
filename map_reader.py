@@ -36,8 +36,6 @@ except ImportError:
     raw_input()
     exit(-1)
 
-# Convert X Y position to MAP file index
-
 class Advanced_MapReader(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
@@ -48,7 +46,7 @@ class Advanced_MapReader(threading.Thread):
         self.settings['store_history'] = False
         self.settings['telnet_server'] = ""
         self.settings['password'] = ""
-        self.settings['http_server'] = ""
+        self.settings['http_server_port'] = ""
         self.settings['ignRqt'] = False
         self.settings['ignTrack'] = False
         self.settings['wLPath'] = ""
@@ -122,7 +120,6 @@ class Advanced_MapReader(threading.Thread):
         if len(self.settings['game_player_path']) == 0:
             print "You must define the .map game path"
             exit(-1)
-            
         self.map_files = self.read_folder(self.settings['game_player_path'])
         if len(self.settings['telnet_server']) == 0:
             if len(self.map_files) == 0:
@@ -130,9 +127,8 @@ class Advanced_MapReader(threading.Thread):
                 exit(-1)
             self.create_tiles(self.map_files, self.settings['tile_path'], self.settings['tile_zoom'], self.settings['store_history'])
         else:
-            th_httpS = KFP_AddPOI(self)
-            th_httpS.start
-            print 'Connect to 7DTD server...'
+            th_addPoi = KFP_AddPOI(self)
+            th_addPoi.start
             exit(-1)
 
     class MapReader:#(threading.Thread):
@@ -236,6 +232,7 @@ class Advanced_MapReader(threading.Thread):
             os.mkdir(tile_output_path)
         self.create_base_tiles(player_map_path, tile_output_path, tile_level, store_history)
         self.create_low_zoom_tiles(tile_output_path, tile_level)
+    # Convert X Y position to MAP file index
     def index_from_xy(self,x, y):
         return (y - 16) << 16 | (x & 65535)
     
