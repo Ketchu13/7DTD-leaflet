@@ -86,7 +86,7 @@ class KFP_AddPOI(threading.Thread):
         if len(self.settings['poiPath']) == 0:
             print "You must define the leaflet poi list."
             exit(-1)
-            
+
         #sAddress = (self.settings['sIp'], int(self.settings['sPort']))
         fen = self.AddPOI_GUI(self)
         fen.start()
@@ -229,10 +229,7 @@ class KFP_AddPOI(threading.Thread):
             self.sock.close()
     """ HTTP SERVER """
     class httpServer(threading.Thread):
-        """ Class describing a simple HTTP server objects."""
-
         def __init__(self, gui):
-             """ Constructor """
              threading.Thread.__init__(self)
              self.GUI = gui   
              self.host = ''
@@ -240,7 +237,6 @@ class KFP_AddPOI(threading.Thread):
              self.www = self.GUI.parent.settings['www']
 
         def run(self):
-             """ Attempts to aquire the socket and launch the server """ 
              self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
              try: 
                  self.GUI.updateHTTP("Launching HTTP server on " + self.host + ":" + str(self.port))
@@ -257,23 +253,18 @@ class KFP_AddPOI(threading.Thread):
                          ub = True
                      except Exception as e:
                          self.GUI.updateHTTP("ERROR: Failed to acquire sockets for ports " + str(self.port))
-
              self.GUI.updateHTTP("Server successfully acquired the socket with port: " + str(self.port))
              self.GUI.updateHTTP("Press Ctrl+C to shut down the server and exit.")
              self._wait_for_connections()
-          
+
         def shutdown(self):   
-             """ Shut down the server """
              try:
                  self.GUI.updateHTTP("Shutting down the server")
                  self.socket.shutdown(socket.SHUT_RDWR)
-                 
              except Exception as e:
                  self.GUI.updateHTTP("Warning: could not shut down the socket. Maybe it was already closed? " + str(e))
 
         def _gen_headers(self, code):
-             """ Generates HTTP response Headers. Ommits the first line! """
-             # determine response code
              h = ''
              if (code == 200):
                 h = 'HTTP/1.1 200 OK\n'
@@ -283,58 +274,36 @@ class KFP_AddPOI(threading.Thread):
              current_date = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime()) 
              h += 'Date: ' + current_date + '\n'
              h += 'Server: KFP-Python-HTTP-Server\n'
-             h += 'Connection: close\n\n'  # signal that the conection wil be closed after complting the request
+             h += 'Connection: close\n\n'
              return h
 
         def _wait_for_connections(self):
-             """ Main loop awaiting connections """
              while True:
                  self.GUI.updateHTTP("Awaiting New connection")
-                 self.socket.listen(3)  # maximum number of queued connections
-                 
+                 self.socket.listen(3)
                  conn, addr = self.socket.accept()
-                 # conn - socket to client
-                 # addr - clients address
-                 
-                
-                 
-                 data = conn.recv(1024)  # receive data from client
-                 string = bytes.decode(data)  # decode it to string
-                 
-                 # determine request method  (HEAD and GET are supported)
+                 data = conn.recv(1024)
+                 string = bytes.decode(data)
                  request_method = string.split(' ')[0]
-                 self.GUI.updateHTTP("Got connection from:" + str(addr) + " - Method: " + request_method)
-                 self.GUI.updateHTTP("Request body: " + string.split('\n')[0])
-                 
-                 # if string[0:3] == 'GET':
+                 self.GUI.updateHTTP("Got connection from:" + str(addr) + " - Request body: " + string.split('\n')[0])
                  if (request_method == 'GET') | (request_method == 'HEAD'):
-                     # file_requested = string[4:]
-
-                     # split on space "GET /file.html" -into-> ('GET','file.html',...)
-                     file_requested = string.split(' ')
-                     file_requested = file_requested[1]  # get 2nd element
-
-                     # Check for URL arguments. Disregard them
-                     file_requested = file_requested.split('?')[0]  # disregard anything after '?'
-
-                     if (file_requested == '/'):  # in case no file is specified by the browser
-                         file_requested = '/index.html'  # load index.html by default
-
-                     file_requested = self.www + file_requested
-                     self.GUI.updateHTTP("Serving web page [" + file_requested + "]")
-
+                     fileRqt = string.split(' ')
+                     fileRqt = fileRqt[1]
+                     fileRqt = fileRqt.split('?')[0]
+                     if (fileRqt == '/'):
+                         fileRqt = '/index.html'
+                     fileRqt = self.www + fileRqt
+                     self.GUI.updateHTTP("Serving web page [" + fileRqt + "]")
                      # # Load file content
                      try:
-                         file_handler = open(file_requested, 'rb')
-                         if (request_method == 'GET'):  # only read the file when GET
-                             response_content = file_handler.read()  # read file content
+                         file_handler = open(fileRqt, 'rb')
+                         if (request_method == 'GET'):
+                             response_content = file_handler.read()
                          file_handler.close()
                          response_headers = self._gen_headers(200)
-
-                     except Exception as e:  # in case file was not found, generate 404 page
+                     except Exception as e:
                          self.GUI.updateHTTP("Warning, file not found. Serving response code 404\n" + str(e))
                          response_headers = self._gen_headers(404)
-                     
                          if (request_method == 'GET'):
                             response_content = b"<html><head>" + \
                                     "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">"+ \
@@ -343,15 +312,12 @@ class KFP_AddPOI(threading.Thread):
                                     "color: red;"+ \
                                     "background-color:black;\"><h2>KFP ZBot Lite Simple Web Server</h2>"+ \
                                     "<!--div>404 - Not Found</div--></body></html>"  
-
-                     server_response = response_headers.encode()  # return headers for GET and HEAD
+                     server_response = response_headers.encode()
                      if (request_method == 'GET'):
-                         server_response += response_content  # return additional conten for GET only
-
+                         server_response += response_content
                      conn.send(server_response)
                      self.GUI.updateHTTP("Closing connection with client")
                      conn.close()
-
                  else:
                      self.GUI.updateHTTP("Unknown HTTP request method: " + request_method)
 
@@ -442,7 +408,7 @@ class KFP_AddPOI(threading.Thread):
             self.labelp1 = Label(self.tabPage.pages['AddPoi'].frame, bg="#000000", fg="#ff0000", text="AddPoi Logs: ", justify=LEFT)
             self.textp1 = Text(self.tabPage.pages['AddPoi'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)
             self.labelp1.grid(in_=self.tabPage.pages['AddPoi'].frame, column=1, row=1, columnspan=1, ipadx=0, ipady=0, padx=5, pady=0, rowspan=1, sticky="w")
-            
+
             self.textp1.grid(in_=self.tabPage.pages['AddPoi'].frame, column=1, row=2, columnspan=1, ipadx=5, ipady=0, padx=2, pady=0, rowspan=2, sticky="news")
             self.tabPage.pages['AddPoi'].frame.grid_rowconfigure(1, weight=0, minsize=15, pad=0)
             self.tabPage.pages['AddPoi'].frame.grid_rowconfigure(2, weight=1, minsize=509, pad=0)
@@ -503,7 +469,7 @@ class KFP_AddPOI(threading.Thread):
             self.text1.config(state=DISABLED)
             self.text1.see(END)
 
-        def updateHTTP(self, value):        
+        def updateHTTP(self, value):
             self.texthl1.config(state=NORMAL)
             self.texthl1.insert('end', time.strftime("%X") + " - " + value + '\n')
             self.texthl1.config(state=DISABLED)
