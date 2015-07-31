@@ -41,98 +41,56 @@ import xml.etree.ElementTree as ET
 
 class KFP_AddPOI(threading.Thread):
     def usage(self):
-        print "This program extract and merge map tiles of all players.Then write it in a folder with verious zoom" \
-              " levels. In order to hide player bases, this program keep only the oldest version of each tile by default." \
-              " By providing the Server telnet address and password this software run in background and is able to do the" \
-              " following features:\n" \
-              " - Update tiles when a player disconnect\n" \
-              " - Add Poi when a user say /addpoi title\n" \
-              " - Update players csv coordinates file\n"
+        print "This program extract and merge map tiles of all players.Then write it in a folder with verious zoom"
+        print " levels. In order to hide player bases, this program keep only the oldest version of each tile by default."
+        print    " By providing the Server telnet address and password this software run in background and is able to do the"
+        print    " following features:\n" 
+        print    " - Update tiles when a player disconnect\n" 
+        print    " - Add Poi when a whitelisted user say /addpoi title\n" 
+        print    " - Update players csv coordinates file\n"
         print "Usage:"
         print "map_reader -g XX [options]"
         print " -g \"C:\\Users..\":\t The folder that contain .map files"
         print " -t \"tiles\":\t\t The folder that will contain tiles (Optional)"
-        print " -z 8:\t\t\t\t Zoom level 4-n. Number of tiles to extract around position 0,0 of map." \
-              " It is in the form of 4^n tiles.It will extract a grid of 2^n*16 tiles on each side.(Optional)"
+        print " -z 8:\t\t\t\t Zoom level 4-n. Number of tiles to extract around position 0,0 of map." 
+        print      " It is in the form of 4^n tiles.It will extract a grid of 2^n*16 tiles on each side.(Optional)"
         print " -s telnethost:port \t7DTD server ip and port (telnet port, default 8081) (Optional)"
         print " -p CHANGEME Password of telnet, default is CHANGEME (Optional)"
-        print " --ignore-poi \t Do not read /addpoi command of players"
-        print " --ignore-track \t Do not write players track in csv files"
-        print " -newest Keep track of updates and write the last version of tiles. This will show players bases on map. " \
-              "(Optional)"
+        print " -i \t Do not read /addpoi command of players"
+        print " -x \t Do not write players track in csv files"
+        print " -h 8080 Http Server Port(default 8081) (Optional)"
+        print " -w \"C:\\...\\whitelist.xml\":\t\t Authorized users list path..."
+        print " -k \"C:\\...\\POIList.xml\":\t\t POI list xml..."
+        print " -v \t\t\t\t Show received data (0=False, 1=True)..."
+        print " -c \"www\":\t\t The folder that contain your index.html (Optional)"
+        print " -newest Keep track of updates and write the last version of tiles. This will show players bases on map. " 
+        print     "(Optional)"
 
     def __init__(self,parent):
         threading.Thread.__init__(self)
-        global sAddress, sip, sPort, sPass, wLPath, poiPath, verbose, settings, fen
-        sIp = 'localhost'
-        sPort = 8081
+        global fen
         self.parent = parent
-        print 'ini'
-        print 'jjj'
-        sPass = None
-        sIp = None
-        sPort = None
-        wLPath = None
-        poiPath = None
-        alwd = False
-        adp = False
-        verbose = None
-        psdR = None
-        poiName = None
-        settings = {}
-        try:
-            f = open('./config.kfp', "r")
-            for i in f:
-                i = i.strip()
-                if len(i) > 0:
-                    s = i.split("=")
-                    key = s[0].strip()
-                    value = s[1].strip()
-                    settings[key] = value
-        except:
-            print("ERROR: file '" + config_file + "' does not exist or is improperly formatted")
-           
-        print settings['sIp']
-        """try:
-            for opt, value in getopt.getopt(sys.argv[1:], "i:p:z:w:k:v")[0]:
-                if opt == "-i":
-                    settings['sIp'] = value
-                elif opt == "-p":
-                    settings['sPort'] = int(value)
-                elif opt == "-z":
-                    settings['sPass'] = value
-                elif opt == "-w":
-                    settings['wLPath'] = value
-                elif opt == "-k":
-                    settings['poiPath'] = value
-                elif opt == "-v":
-                    settings['verbose'] = value
-                print 'opt: ' + value
-        except getopt.error, msg:
-            print 'error'
-            self.usage()
-            raw_input()
-            exit(-1)"""
+        self.settings = self.parent.settings
+        print self.settings['telnet_server']
 
-        if settings['wLPath'] is None:  # Show gui to select poi whitelist folder
-            settings['wLPath'] = self.selFile({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
+        if self.settings['wLPath'] is None:  # Show gui to select poi whitelist folder
+            self.settings['wLPath'] = self.selFile({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
                                                "title": "Choose the Whiteliste that contain autorised users infos."})
 
-        if len(settings['wLPath']) == 0:
+        if len(self.settings['wLPath']) == 0:
             print "You must define the leaflet users whitelist."
             exit(-1)
 
-        if settings['poiPath'] is None:  # Show gui to select poi list.xml path
-            settings['poiPath'] = self.selFile({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
+        if self.settings['poiPath'] is None:  # Show gui to select poi list.xml path
+            self.settings['poiPath'] = self.selFile({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
                         "title": "Choose the POIList.xml path."})
 
-        if len(settings['poiPath']) == 0:
+        if len(self.settings['poiPath']) == 0:
             print "You must define the leaflet poi list."
             exit(-1)
             
-        sAddress = (settings['sIp'], int(settings['sPort']))
+        #sAddress = (self.settings['sIp'], int(self.settings['sPort']))
         fen = self.AddPOI_GUI(self)
-        print 'fen start'
         fen.start()
 
    
@@ -183,16 +141,16 @@ class KFP_AddPOI(threading.Thread):
                  print "error"        
             
         def run(self):
-            sPass = settings['sPass']
-            sIp = settings['sIp']
-            sPort = settings['sPort']
-            wLPath = str(settings['wLPath'])
+            sPass = self.a.parent.settings['sPass']
+            sIp = self.a.parent.settings['sIp']
+            sPort = self.a.parent.settings['sPort']
+            wLPath = str(self.a.parent.settings['wLPath'])
             alwd = False
             adp = False
-            verbose = bool(settings['verbose'])
+            verbose = bool(self.a.parent.settings['verbose'])
             psdR = None
             poiName = None
-            poiPath = settings['poiPath']
+            poiPath = self.a.parent.settings['poiPath']
             listUsers = []
             print 'okik'
             loc = None
@@ -455,9 +413,9 @@ class KFP_AddPOI(threading.Thread):
             strs2 = StringVar()
             strs3 = StringVar()
             strs4 = StringVar()        
-            strs1.set(settings['sPort'])
-            strs2.set(settings['sIp'])
-            strs3.set(settings['sPass'])
+            strs1.set(self.parent.parent.settings['sPort'])
+            strs2.set(self.parent.parent.settings['sIp'])
+            strs3.set(self.parent.parent.settings['sPass'])
             strs4.set("say ")
             self.entry_1 = Entry(self.tabPage.pages['Logs'].frame, textvariable=strs4, bg="#000000", fg="#ff0000", width=0,)
             self.entry2 = Entry(self.tabPage.pages['Logs'].frame, textvariable=strs1, justify="center", relief="flat", width=0,)
@@ -551,9 +509,9 @@ class KFP_AddPOI(threading.Thread):
             self.tabPage.pages['HTTP_Server'].frame.grid_columnconfigure(2, weight=0, minsize=40, pad=0)
             self.rootM.grid_columnconfigure(1, weight=1, minsize=200, pad=0)
             self.rootM.grid_rowconfigure(1, weight=1, minsize=200, pad=0)
-            print settings['wLPath'] 
-            self.readWL(settings['wLPath'])
-            self.th_R.readPoi(settings['poiPath'])
+            print self.parent.parent.settings['wLPath'] 
+            self.readWL(self.parent.parent.settings['wLPath'])
+            self.th_R.readPoi(self.parent.parent.settings['poiPath'])
             
             self.rootM.mainloop();
             
@@ -636,24 +594,24 @@ class KFP_AddPOI(threading.Thread):
                  self.textwl1.config(state=DISABLED)
                  self.textwl1.see(END)
         def startHTTPS(self):
-            self.th_Http = self.parent.httpServer(self)        
+            self.th_Http = self.parent.httpServer(self)
             self.th_Http.start()
            
         def shutdHTTPS(self):
             self.th_Http.join()
             
-        def connect(self):        
-                    
+        def connect(self):
             self.button1.configure(text='Disconnect', command=self.send_FIN)
             self.button2.configure(state='normal')
-            self.update('Connecting to %s port %s' % sAddress)        
+            self.update('Connecting to ' + self.parent.settings['telnet_server'])
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-            sAdress = self.entry_1.get(), self.entry2.get()
-            self.sock.connect(sAddress)
+            sAdress = (self.entry4.get(), int(self.entry2.get()))
+            print sAdress
+            self.sock.connect(sAdress)
             self.update(u'Connexion établie avec le serveur.')
             self.th_R = self.parent.ThreadReception(self.sock, self)
-            self.th_R.start()      
-            self.rootM.after(6000, self.sendAllData('lp'))        
+            self.th_R.start()
+            self.rootM.after(6000, self.sendAllData('lp'))
           
     class sendData(threading.Thread):
         def __init__(self, sock, value):
@@ -661,7 +619,7 @@ class KFP_AddPOI(threading.Thread):
             self.sock = sock
             self.value = value 
         def run(self):
-            self.sock.send(self.value + '\n')    
+            self.sock.send(self.value + '\n')
    
     def run(self):
         pass

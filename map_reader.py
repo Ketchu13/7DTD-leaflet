@@ -36,39 +36,76 @@ except ImportError:
     raw_input()
     exit(-1)
 
-##
 # Convert X Y position to MAP file index
 
 class Advanced_MapReader(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
-        self.game_player_path = None
-        self.tile_path = "tiles"
-        self.tile_zoom = 8
-        self.store_history = False
-        self.telnet_server = ""
-        self.password = ""
+        self.settings = {}
+        self.settings['game_player_path'] = None
+        self.settings['tile_path'] = "tiles"
+        self.settings['tile_zoom'] = 8
+        self.settings['store_history'] = False
+        self.settings['telnet_server'] = ""
+        self.settings['password'] = ""
+        self.settings['http_server'] = ""
+        self.settings['ignRqt'] = False
+        self.settings['ignTrack'] = False
+        self.settings['wLPath'] = ""
+        self.settings['poiPath'] = ""
+        self.settings['verbose'] = False
+        self.settings['www'] = ""
+        # parse configfile options
+        try:
+            f = open('./config.kfp', "r")
+            for i in f:
+                i = i.strip()
+                if len(i) > 0:
+                    s = i.split("=")
+                    key = s[0].strip()
+                    value = s[1].strip()
+                    self.settings[key] = value
+        except:
+            print("ERROR: file ./config.kfp does not exist or is improperly formatted")
+
         # parse command line options
         try:
-            for opt, value in getopt.getopt(sys.argv[1:], "g:t:z:n:s:u:p:")[0]:
+            for opt, value in getopt.getopt(sys.argv[1:], "g:t:z:n:s:h:p:i:x:w:k:v:c:")[0]:
                 if opt == "-g":
-                    self.game_player_path = value
+                     self.settings['game_player_path'] = value
                 elif opt == "-t":
-                    self.tile_path = value
+                    self.settings['tile_path'] = value
                 elif opt == "-z":
-                    self.tile_zoom = int(value)
+                    self.settings['tile_zoom'] = int(value)
                 elif opt == "-n":
-                    self.store_history = True
+                    self.settings['store_history'] = True
                     print "Store all version of tiles, may take huge disk space"
                 elif opt == "-s":
-                    self.telnet_server = value
+                    self.settings['telnet_server'] = value
+                    self.settings['sIp'] = value.split(':')[0]
+                    self.settings['sPort'] = value.split(':')[1]
+                elif opt == "-h":
+                    self.settings['http_server'] = int(value)
                 elif opt == "-p":
-                    self.password = value
+                    self.settings['sPass'] = value
+                elif opt == "-i":
+                    self.settings['ignRqt'] = True
+                elif opt == "-x":
+                    self.settings['ignTrack'] = True
+                elif opt == "-w":
+                    self.settings['wLPath'] = value
+                elif opt == "-k":
+                    self.settings['poiPath'] = value
+                elif opt == "-v":
+                    self.settings['verbose'] = True
+                elif opt == "-c":
+                    self.settings['www'] = value
         except getopt.error, msg:
+            print str(msg)
             self.usage()
             raw_input()
             exit(-1)
-        if self.game_player_path is None:
+        if self.settings['game_player_path'] is None:
             # Show gui to select tile folder
             try:
                 import tkFileDialog
@@ -77,34 +114,26 @@ class Advanced_MapReader(threading.Thread):
                 root.withdraw()
                 opts = {"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
                         "title": "Choose player path that contain .map files"}
-                self.game_player_path = tkFileDialog.askdirectory(**opts)
+                self.settings['game_player_path'] = tkFileDialog.askdirectory(**opts)
             except ImportError:
-                #Headless environment
-                print 'usageee:'
                 self.usage()
                 exit(-1)
-        if len(self.game_player_path) == 0:
+                
+        if len(self.settings['game_player_path']) == 0:
             print "You must define the .map game path"
             exit(-1)
-        if len(self.telnet_server) == 0:
-            self.map_files = self.read_folder(self.game_player_path)
-            if len(map_files) == 0:
-                print "No .map files found in ", self.game_player_path
-                exit(-1)
-            create_tiles(self.map_files, self.tile_path, self.tile_zoom, self.store_history)
-        else:
-            self.map_files = self.read_folder(self.game_player_path)
-            if len(self.map_files) == 0:
-                print "No .map files found in ", self.game_player_path
-                exit(-1)
-            print 'server'
             
+        self.map_files = self.read_folder(self.settings['game_player_path'])
+        if len(self.settings['telnet_server']) == 0:
+            if len(self.map_files) == 0:
+                print "No .map files found in ", self.settings['game_player_path']
+                exit(-1)
+            self.create_tiles(self.map_files, self.settings['tile_path'], self.settings['tile_zoom'], self.settings['store_history'])
+        else:
             th_httpS = KFP_AddPOI(self)
             th_httpS.start
-            print 'Connect to 7DTD server'
+            print 'Connect to 7DTD server...'
             exit(-1)
-    
-
 
     class MapReader:#(threading.Thread):
         db = None
@@ -117,7 +146,7 @@ class Advanced_MapReader(threading.Thread):
             #threading.Thread.__init__(self)
             self.db = sqlite3.connect(os.path.join(database_directory, 'tile_history.db'))
             self.db.text_factory = str
-            self.store_history = store_history
+            self.settings['store_history'] = store_history
             self.db.execute("CREATE TABLE IF NOT EXISTS TILES(POS int,HASH int, T TIMESTAMP, data CHAR(512),"
                             " PRIMARY KEY(POS,HASH))")
             self.db.execute("CREATE TABLE IF NOT EXISTS VERSION as select 1 version")
@@ -129,7 +158,7 @@ class Advanced_MapReader(threading.Thread):
             return index in self.known_tiles
 
         def do_insert_tile(self, index, tile_hash):
-            if self.store_history:
+            if self.settings['store_history']:
                 # Check if the tile is not already in the db
                 rs = self.db.execute("SELECT COUNT(*) CPT FROM TILES WHERE POS=? AND HASH=?", [index, tile_hash])
                 if rs.fetchone()[0] == 0:
@@ -151,7 +180,7 @@ class Advanced_MapReader(threading.Thread):
         def fetch_tile(self, index):
             if not self.is_tile_stored(index):
                 return None
-            if self.store_history:
+            if self.settings['store_history']:
                 data = self.db.execute("SELECT data FROM TILES WHERE POS=? ORDER BY T DESC LIMIT 1", [index]).fetchone()
                 if not data is None:
                     return data[0]
@@ -182,7 +211,7 @@ class Advanced_MapReader(threading.Thread):
                 if not index_only:
                     curs.seek(524297)
                     for i in xrange(num):
-                        if self.store_history or not self.is_tile_stored(tiles_index[i]):
+                        if self.settings['store_history'] or not self.is_tile_stored(tiles_index[i]):
                             # extract 16-bytes pixel 16*16 tile
                             tile_data = curs.read(512)
                             if len(tile_data) == 512:
@@ -198,7 +227,6 @@ class Advanced_MapReader(threading.Thread):
                 else:
                     self.tiles = dict.fromkeys(tiles_index + self.tiles.keys())
             self.db.commit()
-
 
     def create_tiles(self, player_map_path, tile_output_path, tile_level, store_history):
         """
@@ -284,7 +312,6 @@ class Advanced_MapReader(threading.Thread):
               "miny:", minmax_tile[0][1], " maxy: ", minmax_tile[1][1]
         print "Tiles used / total read", used_tiles, " / ", reader.new_tiles
 
-
     def create_low_zoom_tiles(self,tile_output_path, tile_level_native):
         """
             Merge 4 tiles of 256x256 into a big 512x512 tile then resize to 256x256
@@ -346,14 +373,16 @@ class Advanced_MapReader(threading.Thread):
 
     def copyMapFile(self,path,value):
         shutil.copy(os.path.join(path,value),os.path.join("Map",value) )
-        
-    def usage():
+        """    def copyMapFiles(self,path,value):
+        shutil.copytree(os.path.join(path,value),os.path.join("Map",value) )
+        """
+    def usage(self):
         print "This program extract and merge map tiles of all players.Then write it in a folder with verious zoom"
         print " levels. In order to hide player bases, this program keep only the oldest version of each tile by default."
         print    " By providing the Server telnet address and password this software run in background and is able to do the"
         print    " following features:\n" 
         print    " - Update tiles when a player disconnect\n" 
-        print    " - Add Poi when a user say /addpoi title\n" 
+        print    " - Add Poi when a whitelisted user say /addpoi title\n" 
         print    " - Update players csv coordinates file\n"
         print "Usage:"
         print "map_reader -g XX [options]"
@@ -363,17 +392,20 @@ class Advanced_MapReader(threading.Thread):
         print      " It is in the form of 4^n tiles.It will extract a grid of 2^n*16 tiles on each side.(Optional)"
         print " -s telnethost:port \t7DTD server ip and port (telnet port, default 8081) (Optional)"
         print " -p CHANGEME Password of telnet, default is CHANGEME (Optional)"
-        print " --ignore-poi \t Do not read /addpoi command of players"
-        print " --ignore-track \t Do not write players track in csv files"
+        print " -i 0 \t Do not read /addpoi command of players"
+        print " -x 0 \t Do not write players track in csv files"
+        print " -h 8080 Http Server Port(default 8081) (Optional)"
+        print " -w \"C:\\...\\whitelist.xml\":\t\t Authorized users list path..."
+        print " -k \"C:\\...\\POIList.xml\":\t\t POI list xml..."
+        print " -v 1 \t\t\t\t Show received data (0=False, 1=True)..."
+        print " -c \"www\":\t\t The folder that contain your index.html (Optional)"
         print " -newest Keep track of updates and write the last version of tiles. This will show players bases on map. " 
         print     "(Optional)"
 
-
     def run(self):
         pass
-       
+
+        
 th1 = Advanced_MapReader()
 th1.start()
 th1.join()
-"""if __name__ == "__main__":
-    main()"""
