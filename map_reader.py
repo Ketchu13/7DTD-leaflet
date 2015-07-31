@@ -27,7 +27,7 @@ import os
 import time
 import sqlite3
 import shutil
-from kfp_addpoi_client import *
+from kfp_addpoi_GUI import *
 try:
     from PIL import Image, ImageOps
 except ImportError:
