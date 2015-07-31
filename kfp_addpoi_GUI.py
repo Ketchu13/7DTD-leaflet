@@ -32,6 +32,7 @@ import socket
 import sys
 import sys
 import sys
+from threading import Timer
 from threading import Thread
 import threading
 import time
@@ -175,6 +176,7 @@ class KFP_AddPOI(threading.Thread):
                                  if 'Logon successful.' in d and not loged:
                                      loged = True
                                      self.a.sendAllData('lp')
+                                     self.a.rfrshPlyLst()
                                  elif verbose:
                                      self.a.update(s)
                                  if 'GMSG:' in s:  # chat msg
@@ -213,7 +215,11 @@ class KFP_AddPOI(threading.Thread):
                                      l = s.find('steamid=')
                                      sid = s[l + 8:s.find(',', l)]
                                      locTp = s[j + 7:]
-                                     loc = locTp[:locTp.find('), rot')].split(', ')
+                                     loc = locTp[:locTp.find('), rot')]#.split(', ')
+                                     if self.a.parent.settings['ignTrack']:
+                                        tracks = [(psd , int(float(loc.split(', ')[0])), int(float(loc.split(', ')[2])))]
+                                        self.th_tracks = self.a.parent.updateTracks_csv(self,tracks)
+                                        self.th_tracks.start()
                                      if adp:
                                          if psdR == psd and not psdR == None:
                                              adp = False
@@ -227,6 +233,23 @@ class KFP_AddPOI(threading.Thread):
                                                      self.a.sendAllData('say \"[FF0000]' + psdRPOI + ', your are not allowed to add a poi.\"')
             print u"Client arrêté. connexion interrompue."
             self.sock.close()
+
+    class updateTracks_csv(threading.Thread):
+        def __init__(self,parent,value):
+            threading.Thread.__init__(self)
+            self.parent = parent
+            self.value = value
+        def run(self):
+            try:
+                import csv
+                Fn = (r".\players\tracks.csv")
+                f = open(Fn, 'ab')
+                w = csv.writer(f)
+                w.writerows(self.value)
+                f.close
+            except Exception as e:
+                print e
+
     """ HTTP SERVER """
     class httpServer(threading.Thread):
         def __init__(self, gui):
@@ -545,7 +568,10 @@ class KFP_AddPOI(threading.Thread):
             self.update(u'Connexion établie avec le serveur.')
             self.th_R = self.parent.ThreadReception(self.sock, self)
             self.th_R.start()
-            self.rootM.after(1000, self.sendAllData('lp'))
+        def rfrshPlyLst(self):
+            t = Timer(59.0, self.rfrshPlyLst)
+            t.start()
+            self.sock.send('lp\n')
 
     class sendData(threading.Thread):
         def __init__(self, sock, value):
@@ -553,7 +579,7 @@ class KFP_AddPOI(threading.Thread):
             self.sock = sock
             self.value = value 
         def run(self):
-            self.sock.send(self.value + '\n')
+            self.sock.send(self.value.encode(encoding='UTF-8', errors='ignore') + '\n')
 
     def run(self):
         pass
@@ -564,6 +590,6 @@ class KFP_AddPOI(threading.Thread):
             self.parent = parent
             self.value = value 
         def run(self):
-            self.parent.parent.copyMapFile(self.parent.parent.game_player_path, self.value+".map")
+            self.parent.parent.copyMapFile(self.parent.parent.settings['game_player_path'], self.value+".map")
             self.parent.parent.map_files = self.parent.parent.read_folder("Map")
-            self.parent.parent.create_tiles(self.parent.parent.map_files, self.parent.parent.tile_path, self.parent.parent.tile_zoom, self.parent.parent.store_history)
+            self.parent.parent.create_tiles(self.parent.parent.map_files, self.parent.parent.settings['tile_path'], self.parent.parent.settings['tile_zoom'], self.parent.parent.settings['store_history'])

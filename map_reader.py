@@ -131,7 +131,7 @@ class Advanced_MapReader(threading.Thread):
             th_addPoi.start
             exit(-1)
 
-    class MapReader:#(threading.Thread):
+    class MapReader:
         db = None
         store_history = False
         tiles_file_path = {}
@@ -401,7 +401,6 @@ class Advanced_MapReader(threading.Thread):
 
     def run(self):
         pass
-
         
 th1 = Advanced_MapReader()
 th1.start()
