@@ -24,6 +24,8 @@
 # @author Nicolas Grimaud ketchu13@hotmail.com https://github.com/ketchu13
  
 from Tkinter import *
+import ftplib as ftp 
+from cStringIO import StringIO
 import getopt
 import os
 import re
@@ -233,7 +235,56 @@ class KFP_AddPOI(threading.Thread):
                                                      self.a.sendAllData('say \"[FF0000]' + psdRPOI + ', your are not allowed to add a poi.\"')
             print u"Client arrêté. connexion interrompue."
             self.sock.close()
+    class Capturing(list):
+        
+        def __enter__(self):
+            self._stdout = sys.stdout
+            sys.stdout = self._stringio = StringIO()
+            return self
+        def __exit__(self, *args):
+            self.extend(self._stringio.getvalue().splitlines())
+            sys.stdout = self._stdout
+            
+    class KFPFTP(threading.Thread):
+        def __init__(self, parent):
+            threading.Thread.__init__(self)
+            self.parent = parent
+            self.connection = ftp.FTP('ftp.ketchu-free-party.fr', 'ketchufr', '*****')
+            with self.parent.parent.Capturing() as self.output:
+                
+                print self.ls()
+            for line in self.output:
+                self.parent.updateFTP(line)
 
+       
+        def cd(self,rep):
+            return self.connection.cwd(rep)
+        def ls(self):
+            a = self.connection.dir()
+            return a
+        def lsd(self,rep):
+            return self.connection.dir(rep)
+        def getF(self,rep):
+            gFile = open(os.path.join('./', rep), "wb")
+            self.connection.retrbinary('RETR ' + rep, gFile.write)
+            gFile.close()
+        def deco(self):
+            return self.connection.quit()
+        def envoi(self,adresse_fichier):
+            file = open(adresse_fichier, 'rb')
+            self.connection.storbinary('STOR ' + adresse_fichier, file)
+            file.close()
+        def rename(self,avant, apres):
+            return self.connection.rename(avant, apres)
+        def efface(self,fichier):
+            return self.connection.delete(fichier)
+        def creer_rep(self,nom):
+            return self.connection.mkd(nom)     
+        def sup_rep(self,nom):
+            return self.connection.rmd(nom)    
+        def run(self):
+            pass
+ 
     class ShowKeyLocation(threading.Thread):
         def __init__(self,parent,value):
             threading.Thread.__init__(self)
@@ -393,7 +444,14 @@ class KFP_AddPOI(threading.Thread):
             self.rootM = Tk()
             self.rootM.configure(bg='black')
             self.rootM.title = "ZBot lite py"
-            self.tabPage = TabbedPageSet(self.rootM, page_names=['Logs', 'AddPoi', 'POIList.xml', 'WhiteList', 'HTTP_Server', 'Keystones Locations'], bg="#000000", n_rows=0, expand_tabs=True,)
+            self.tabPage = TabbedPageSet(self.rootM,
+                page_names=['Logs',
+                    'AddPoi',
+                    'POIList.xml',
+                    'WhiteList',
+                    'HTTP_Server',
+                    'Keystones Locations',
+                    'FTP Client'], bg="#000000", n_rows=0, expand_tabs=True,)
             self.tabPage.pages['Logs'].frame.configure(bg="#000000")
             self.tabPage.pages['AddPoi'].frame.configure(bg="#000000")
             self.tabPage.pages['POIList.xml'].frame.configure(bg="#000000")
@@ -529,6 +587,19 @@ class KFP_AddPOI(threading.Thread):
             self.tabPage.pages['Keystones Locations'].frame.grid_rowconfigure(2, weight=1, minsize=509, pad=0)
             self.tabPage.pages['Keystones Locations'].frame.grid_columnconfigure(1, weight=1, minsize=760, pad=0)
             self.tabPage.pages['Keystones Locations'].frame.grid_columnconfigure(2, weight=1, minsize=40, pad=0)
+            """POIKeystones Locations Tab"""
+            self.labelf1 = Label(self.tabPage.pages['FTP Client'].frame, bg="#000000", fg="#ff0000", text="FTP Client Logs: ", justify=LEFT)
+            self.textf1 = Text(self.tabPage.pages['FTP Client'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)
+            self.labelf1.grid(in_=self.tabPage.pages['FTP Client'].frame, column=1, row=1, columnspan=1, ipadx=0, ipady=0, padx=5, pady=0, rowspan=1, sticky="w")
+
+            self.textf1.grid(in_=self.tabPage.pages['FTP Client'].frame, column=1, row=2, columnspan=1, ipadx=5, ipady=0, padx=2, pady=0, rowspan=2, sticky="news")
+            self.buttonf3 = Button(self.tabPage.pages['FTP Client'].frame, text="FTP Client", command=self.startFtp)
+            self.buttonf3.grid(in_=self.tabPage.pages['FTP Client'].frame, column=2, row=1, columnspan=1, rowspan=1, ipadx=0, ipady=0, padx=5, pady=5, sticky="ew")
+            
+            self.tabPage.pages['FTP Client'].frame.grid_rowconfigure(1, weight=0, minsize=15, pad=0)
+            self.tabPage.pages['FTP Client'].frame.grid_rowconfigure(2, weight=1, minsize=509, pad=0)
+            self.tabPage.pages['FTP Client'].frame.grid_columnconfigure(1, weight=1, minsize=760, pad=0)
+            self.tabPage.pages['FTP Client'].frame.grid_columnconfigure(2, weight=1, minsize=40, pad=0)
             self.rootM.grid_columnconfigure(1, weight=1, minsize=200, pad=0)
             self.rootM.grid_rowconfigure(1, weight=1, minsize=200, pad=0)
 
@@ -537,7 +608,11 @@ class KFP_AddPOI(threading.Thread):
             self.textk1.focus()
             #self.readKL()
             self.rootM.mainloop()
-
+        def startFtp(self):
+            print 'ddddddddd'
+            th_f = self.parent.KFPFTP(self)
+            th_f.start()
+            #th_f.join()
             
         def updatePOIList(self, value):
             self.textpl1.config(state=NORMAL)
@@ -561,7 +636,12 @@ class KFP_AddPOI(threading.Thread):
             self.text1.insert('end', time.strftime("%X") + " - " + s + '\n')
             self.text1.config(state=DISABLED)
             self.text1.see(END)
-
+        def updateFTP(self, value):
+            self.textf1.config(state=NORMAL)
+            self.textf1.insert('end', time.strftime("%X") + " - " + value + '\n')
+            self.textf1.config(state=DISABLED)
+            self.textf1.see(END)
+            
         def updateHTTP(self, value):
             self.texthl1.config(state=NORMAL)
             self.texthl1.insert('end', time.strftime("%X") + " - " + value + '\n')
