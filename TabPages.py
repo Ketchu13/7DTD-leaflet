@@ -60,7 +60,7 @@ class TabSet(Frame):
 
         self.padding_frame = Frame(self, height=2,
                                    borderwidth=0, relief=FLAT,
-                                   background="#000000")#self.cget('background')
+                                   background='#000000')#self.cget('background')
         self.padding_frame.pack(side=TOP, fill=X, expand=False)
 
         self._arrange_tabs()
@@ -195,8 +195,11 @@ class TabSet(Frame):
 
             self.button = Radiobutton(
                 self, text=name, command=self._select_event,
-                padx=5, pady=1, takefocus=FALSE, indicatoron=FALSE,
-                highlightthickness=0, selectcolor='', borderwidth=0)
+                padx=0, pady=3, takefocus=FALSE, indicatoron=FALSE,
+                activebackground='#FF0000',highlightthickness=0,
+                highlightcolor='#000000', selectcolor='#000000',
+                fg='#FF0000', bg='#000000', highlightbackground='#000000',
+                borderwidth=0)
             self.button.pack(side=LEFT, fill=X, expand=True)
 
             self._init_masks()
@@ -229,19 +232,19 @@ class TabSet(Frame):
             background = page_set.pages_frame.cget('background')
             # mask replaces the middle of the border with the background color
             self.mask = Frame(page_set, borderwidth=0, relief=FLAT,
-                              background=background)
+                              background='#000000')
             # mskl replaces the bottom-left corner of the border with a normal
             # left border
             self.mskl = Frame(page_set, borderwidth=0, relief=FLAT,
-                              background=background)
-            self.mskl.ml = Frame(self.mskl, borderwidth=self.bw,
+                              background='#FF0000')
+            self.mskl.ml = Frame(self.mskl, borderwidth=self.bw,background='#FF0000',
                                  relief=RAISED)
             self.mskl.ml.place(x=0, y=-self.bw,
                                width=2*self.bw, height=self.bw*4)
             # mskr replaces the bottom-right corner of the border with a normal
             # right border
             self.mskr = Frame(page_set, borderwidth=0, relief=FLAT,
-                              background=background)
+                              background='#FF0000')
             self.mskr.mr = Frame(self.mskr, borderwidth=self.bw,
                                  relief=RAISED)
 
@@ -311,7 +314,7 @@ class TabbedPageSet(Frame):
         uses_grid = False
 
         def __init__(self, page_set):
-            self.frame = Frame(page_set, borderwidth=2, relief=RAISED)
+            self.frame = Frame(page_set, borderwidth=2, relief=RAISED , background='#FF0000')
 
         def _show(self):
             raise NotImplementedError
