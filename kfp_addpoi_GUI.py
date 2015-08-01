@@ -458,6 +458,7 @@ class KFP_AddPOI(threading.Thread):
             self.tabPage.pages['WhiteList'].frame.configure(bg="#000000")
             self.tabPage.pages['HTTP_Server'].frame.configure(bg="#000000")
             self.tabPage.pages['Keystones Locations'].frame.configure(bg="#000000")
+            self.tabPage.pages['FTP Client'].frame.configure(bg="#000000")
             
             strs1 = StringVar()
             strs2 = StringVar()
@@ -553,7 +554,7 @@ class KFP_AddPOI(threading.Thread):
             self.tabPage.pages['WhiteList'].frame.grid_rowconfigure(2, weight=1, minsize=509, pad=0)
             self.tabPage.pages['WhiteList'].frame.grid_columnconfigure(1, weight=1, minsize=800, pad=0)
             """HTTP Server Tab"""
-            self.labelhl1 = Label(self.tabPage.pages['HTTP_Server'].frame, bg="#000000", fg="#ff0000", text="WhiteList: ", justify=LEFT)
+            self.labelhl1 = Label(self.tabPage.pages['HTTP_Server'].frame, bg="#000000", fg="#ff0000", text="HTTP server Logs: ", justify=LEFT)
             self.texthl1 = Text(self.tabPage.pages['HTTP_Server'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)
             self.labelhl1.grid(in_=self.tabPage.pages['HTTP_Server'].frame, column=1, row=1, columnspan=1, ipadx=0, ipady=0, padx=5, pady=0, rowspan=1, sticky="w")
             self.buttonh2 = Button(self.tabPage.pages['HTTP_Server'].frame, text="Start HTTP Server", command=self.startHTTPS)
