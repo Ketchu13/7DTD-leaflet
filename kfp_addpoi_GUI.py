@@ -30,8 +30,6 @@ import re
 import signal
 import socket
 import sys
-import sys
-import sys
 from threading import Timer
 from threading import Thread
 import threading
@@ -236,6 +234,36 @@ class KFP_AddPOI(threading.Thread):
             print u"Client arrêté. connexion interrompue."
             self.sock.close()
 
+    class ShowKeyLocation(threading.Thread):
+        def __init__(self,parent,value):
+            threading.Thread.__init__(self)
+            self.parent = parent
+            self.value = value
+
+        def run(self):
+            t = ET.parse('./players.xml')
+            r = t.getroot()
+            for player in r.findall('player'):
+                try:
+                    steamId = player.get('id')
+                    try:
+                        th = self.parent.parent.getNameBySid(self,steamId)
+                        th.start()
+                        th.join()
+                    except Exception as e:
+                        print e
+                        pass
+                    i = 0
+                    for lpBlocks in player.findall('lpblock'):
+                        i = i +1
+                        if self.value is None:
+                            self.parent.updateKL('\t\tKeystone ' + str(i) + ': ' + lpBlocks.get('pos'))
+                        elif self.value == steamId:
+                            self.parent.updateKL('\t\tKeystone ' + str(i) + ': ' + lpBlocks.get('pos'))
+                except Exception as e:
+                    print e
+                    pass
+
     class updateTracks_csv(threading.Thread):
         def __init__(self,parent,value):
             threading.Thread.__init__(self)
@@ -365,27 +393,33 @@ class KFP_AddPOI(threading.Thread):
             self.rootM = Tk()
             self.rootM.configure(bg='black')
             self.rootM.title = "ZBot lite py"
-            self.tabPage = TabbedPageSet(self.rootM, page_names=['Logs', 'AddPoi', 'POIList.xml', 'WhiteList', 'HTTP_Server'], bg="#000000", n_rows=0, expand_tabs=True,)
+            self.tabPage = TabbedPageSet(self.rootM, page_names=['Logs', 'AddPoi', 'POIList.xml', 'WhiteList', 'HTTP_Server', 'Keystones Locations'], bg="#000000", n_rows=0, expand_tabs=True,)
             self.tabPage.pages['Logs'].frame.configure(bg="#000000")
             self.tabPage.pages['AddPoi'].frame.configure(bg="#000000")
             self.tabPage.pages['POIList.xml'].frame.configure(bg="#000000")
             self.tabPage.pages['WhiteList'].frame.configure(bg="#000000")
             self.tabPage.pages['HTTP_Server'].frame.configure(bg="#000000")
-            self.label1 = Label(self.tabPage.pages['Logs'].frame, bg="#000000", fg="#ff0000", borderwidth=1, text="Server IP: ",)
-            self.label2 = Label(self.tabPage.pages['Logs'].frame, bg="#000000", fg="#ff0000", text="Server Port: ",)
-            self.label3 = Label(self.tabPage.pages['Logs'].frame, bg="#000000", fg="#ff0000", text="Server Password:",)
+            self.tabPage.pages['Keystones Locations'].frame.configure(bg="#000000")
+            
             strs1 = StringVar()
             strs2 = StringVar()
             strs3 = StringVar()
             strs4 = StringVar()
             strsP1 = StringVar()
             strsP2 = StringVar()
+            
+            
             strs1.set(self.parent.parent.settings['sPort'])
             strs2.set(self.parent.parent.settings['sIp'])
             strs3.set(self.parent.parent.settings['sPass'])
             strs4.set("say ")
             strsP1.set(self.parent.parent.settings['http_server_port'])
             strsP2.set(int(self.parent.parent.settings['http_server_port'])+5)
+
+            """7dtd Server Logs Tab"""
+            self.label1 = Label(self.tabPage.pages['Logs'].frame, bg="#000000", fg="#ff0000", borderwidth=1, text="Server IP: ",)
+            self.label2 = Label(self.tabPage.pages['Logs'].frame, bg="#000000", fg="#ff0000", text="Server Port: ",)
+            self.label3 = Label(self.tabPage.pages['Logs'].frame, bg="#000000", fg="#ff0000", text="Server Password:",)
             self.entry_1 = Entry(self.tabPage.pages['Logs'].frame, textvariable=strs4, bg="#000000", fg="#ff0000", width=0,)
             self.entry2 = Entry(self.tabPage.pages['Logs'].frame, textvariable=strs1, justify="center", relief="flat", width=0,)
             self.entry3 = Entry(self.tabPage.pages['Logs'].frame, textvariable=strs3, justify="center", relief="flat", width=0, show="*")
@@ -433,7 +467,7 @@ class KFP_AddPOI(threading.Thread):
             self.tabPage.pages['Logs'].frame.grid_columnconfigure(7, weight=0, minsize=0, pad=0)
             self.tabPage.pages['Logs'].frame.grid_columnconfigure(8, weight=1, minsize=131, pad=0)
             self.tabPage.pages['Logs'].frame.grid_columnconfigure(9, weight=0, minsize=0, pad=0)
-
+            """POI Logs Tab"""
             self.labelp1 = Label(self.tabPage.pages['AddPoi'].frame, bg="#000000", fg="#ff0000", text="AddPoi Logs: ", justify=LEFT)
             self.textp1 = Text(self.tabPage.pages['AddPoi'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)
             self.labelp1.grid(in_=self.tabPage.pages['AddPoi'].frame, column=1, row=1, columnspan=1, ipadx=0, ipady=0, padx=5, pady=0, rowspan=1, sticky="w")
@@ -442,7 +476,7 @@ class KFP_AddPOI(threading.Thread):
             self.tabPage.pages['AddPoi'].frame.grid_rowconfigure(1, weight=0, minsize=15, pad=0)
             self.tabPage.pages['AddPoi'].frame.grid_rowconfigure(2, weight=1, minsize=509, pad=0)
             self.tabPage.pages['AddPoi'].frame.grid_columnconfigure(1, weight=1, minsize=800, pad=0)
-
+            """POI List Tab"""
             self.labelpl1 = Label(self.tabPage.pages['POIList.xml'].frame, bg="#000000", fg="#ff0000", text="POIList.xml source: ", justify=LEFT)
             self.textpl1 = Text(self.tabPage.pages['POIList.xml'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)
             self.labelpl1.grid(in_=self.tabPage.pages['POIList.xml'].frame, column=1, row=1, columnspan=1, ipadx=0, ipady=0, padx=5, pady=0, rowspan=1, sticky="w")
@@ -451,7 +485,7 @@ class KFP_AddPOI(threading.Thread):
             self.tabPage.pages['POIList.xml'].frame.grid_rowconfigure(1, weight=0, minsize=15, pad=0)
             self.tabPage.pages['POIList.xml'].frame.grid_rowconfigure(2, weight=1, minsize=509, pad=0)
             self.tabPage.pages['POIList.xml'].frame.grid_columnconfigure(1, weight=1, minsize=800, pad=0)
-
+            """POI Users White List Tab"""
             self.labelwl1 = Label(self.tabPage.pages['WhiteList'].frame, bg="#000000", fg="#ff0000", text="WhiteList: ", justify=LEFT)
             self.textwl1 = Text(self.tabPage.pages['WhiteList'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)
             self.labelwl1.grid(in_=self.tabPage.pages['WhiteList'].frame, column=1, row=1, columnspan=1, ipadx=0, ipady=0, padx=5, pady=0, rowspan=1, sticky="w")
@@ -460,7 +494,7 @@ class KFP_AddPOI(threading.Thread):
             self.tabPage.pages['WhiteList'].frame.grid_rowconfigure(1, weight=0, minsize=15, pad=0)
             self.tabPage.pages['WhiteList'].frame.grid_rowconfigure(2, weight=1, minsize=509, pad=0)
             self.tabPage.pages['WhiteList'].frame.grid_columnconfigure(1, weight=1, minsize=800, pad=0)
-
+            """HTTP Server Tab"""
             self.labelhl1 = Label(self.tabPage.pages['HTTP_Server'].frame, bg="#000000", fg="#ff0000", text="WhiteList: ", justify=LEFT)
             self.texthl1 = Text(self.tabPage.pages['HTTP_Server'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)
             self.labelhl1.grid(in_=self.tabPage.pages['HTTP_Server'].frame, column=1, row=1, columnspan=1, ipadx=0, ipady=0, padx=5, pady=0, rowspan=1, sticky="w")
@@ -481,19 +515,43 @@ class KFP_AddPOI(threading.Thread):
             
             self.tabPage.pages['HTTP_Server'].frame.grid_columnconfigure(1, weight=1, minsize=800, pad=0)
             self.tabPage.pages['HTTP_Server'].frame.grid_columnconfigure(2, weight=0, minsize=40, pad=0)
+            
+            """POIKeystones Locations Tab"""
+            self.labelk1 = Label(self.tabPage.pages['Keystones Locations'].frame, bg="#000000", fg="#ff0000", text="Keystones Locations: ", justify=LEFT)
+            self.textk1 = Text(self.tabPage.pages['Keystones Locations'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)
+            self.labelk1.grid(in_=self.tabPage.pages['Keystones Locations'].frame, column=1, row=1, columnspan=1, ipadx=0, ipady=0, padx=5, pady=0, rowspan=1, sticky="w")
+
+            self.textk1.grid(in_=self.tabPage.pages['Keystones Locations'].frame, column=1, row=2, columnspan=1, ipadx=5, ipady=0, padx=2, pady=0, rowspan=2, sticky="news")
+            self.buttonk3 = Button(self.tabPage.pages['Keystones Locations'].frame, text="Keystones locations", command=self.readKL)
+            self.buttonk3.grid(in_=self.tabPage.pages['Keystones Locations'].frame, column=2, row=1, columnspan=1, rowspan=1, ipadx=0, ipady=0, padx=5, pady=5, sticky="ew")
+            
+            self.tabPage.pages['Keystones Locations'].frame.grid_rowconfigure(1, weight=0, minsize=15, pad=0)
+            self.tabPage.pages['Keystones Locations'].frame.grid_rowconfigure(2, weight=1, minsize=509, pad=0)
+            self.tabPage.pages['Keystones Locations'].frame.grid_columnconfigure(1, weight=1, minsize=760, pad=0)
+            self.tabPage.pages['Keystones Locations'].frame.grid_columnconfigure(2, weight=1, minsize=40, pad=0)
             self.rootM.grid_columnconfigure(1, weight=1, minsize=200, pad=0)
             self.rootM.grid_rowconfigure(1, weight=1, minsize=200, pad=0)
+
             self.readWL(self.parent.parent.settings['wLPath'])
             self.th_R.readPoi(self.parent.parent.settings['poiPath'])
-            self.rootM.mainloop();
+            self.textk1.focus()
+            #self.readKL()
+            self.rootM.mainloop()
 
+            
         def updatePOIList(self, value):
             self.textpl1.config(state=NORMAL)
             self.textpl1.delete(1.0, END)
             self.textpl1.insert(END, value + '\n' + '</poilist>')
             self.textpl1.config(state=DISABLED)
             self.textpl1.see(END)
-
+            
+        def updateKL(self, value):
+            self.textk1.config(state=NORMAL)
+            self.textk1.insert('end', time.strftime("%X") + " - " + value + '\n')
+            self.textk1.config(state=DISABLED)
+            self.textk1.see(END)
+            
         def update(self, value):
             if 'INF' in value:
                 s = value[value.find(' INF ') + 5:]
@@ -515,7 +573,11 @@ class KFP_AddPOI(threading.Thread):
             self.textp1.insert('end', time.strftime("%c") + " - " + value + '\n')
             self.textp1.config(state=DISABLED)
             self.textp1.see(END)
-
+        def readKL(self):
+            print 'oooo'
+            th_kl = self.parent.ShowKeyLocation(self, None)
+            th_kl.start()
+            th_kl.join()
         def listUsers(self, usersList):
             self.text2.delete(1.0, END)
             for user in usersList:
@@ -532,11 +594,16 @@ class KFP_AddPOI(threading.Thread):
                 s1 = s.split(' ')
                 for s2 in s1:
                     print s2
+            elif self.entry_1.get()[:2] == 'SK':#TODO
+                th_kl = self.parent.ShowKeyLocation(self, None)
+                th_kl.start()
             else:
+                print self.entry_1.get()
                 self.sendAllData(self.entry_1.get())
 
         def sendAllData(self, value):
             s = self.parent.sendData(self.sock, value)
+            print s
             s.start()
             s.join()
 
@@ -547,6 +614,7 @@ class KFP_AddPOI(threading.Thread):
             self.th_R.exite()
             self.sock.close()
             self.th_R.join()
+            
         def readWL(self, x):
             try:
                 with open(x, "r") as f:
@@ -563,6 +631,7 @@ class KFP_AddPOI(threading.Thread):
                  self.textwl1.insert(END, str(e))
                  self.textwl1.config(state=DISABLED)
                  self.textwl1.see(END)
+
         def startHTTPS(self):
             self.th_Http = self.parent.httpServer(self)
             self.th_Http.start()
@@ -591,10 +660,36 @@ class KFP_AddPOI(threading.Thread):
             self.sock = sock
             self.value = value 
         def run(self):
-            self.sock.send(self.value.encode(encoding='UTF-8', errors='ignore') + '\n')
+            try:
+                print self.value
+                self.sock.send(self.value + '\n')
+            except Exception as e:
+                print e
 
     def run(self):
         pass
+
+    class getNameBySid(threading.Thread):
+        def __init__(self, parent, value):
+            threading.Thread.__init__(self)
+            self.sId = value
+            self.parent = parent
+        def run(self):
+            print 'run'
+            t = ET.parse('./PlayersList2.xml')
+            r = t.getroot()
+            found= False
+            for player in r.findall('player'):
+                try:
+                    steamId = player.get('steamId')
+                    
+                    if steamId == self.sId:
+                       found = True
+                       self.parent.parent.updateKL("SteamId: " + steamId + " - Username: " + player.get('name'))
+                except Exception as e:
+                    print e
+            if not found:
+                self.parent.parent.updateKL("SteamId: " + self.sId + " - Username: unknow")
 
     class mapR(threading.Thread):
         def __init__(self, parent, value):
