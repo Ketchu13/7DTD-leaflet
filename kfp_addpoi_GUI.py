@@ -106,7 +106,7 @@ class KFP_AddPOI(threading.Thread):
              try:
                  old = self.readPoi(x)
                  with open(x, "w") as f:
-                     f.write(old + '\n<poi sname=\"' + psdR + '\" steamId=\"' + sid + '\" pname=\"' + poiName + '\" pos=\"' + loc[0] + ',0,' + loc[2] + '\" icon=\"farm\" />\n</poilist>')
+                     f.write(old + '\n<poi sname=\"' + psdR + '\" steamId=\"' + sid + '\" pname=\"' + poiName + '\" pos=\"' + loc + '\" icon=\"farm\" />\n</poilist>')
                  old = self.readPoi(x)   
                  return True
                  
@@ -216,8 +216,10 @@ class KFP_AddPOI(threading.Thread):
                                      sid = s[l + 8:s.find(',', l)]
                                      locTp = s[j + 7:]
                                      loc = locTp[:locTp.find('), rot')]#.split(', ')
+                                     locx = int(float(loc.split(', ')[0]))
+                                     locy = int(float(loc.split(', ')[2]))
                                      if self.a.parent.settings['ignTrack']:
-                                        tracks = [(psd , int(float(loc.split(', ')[0])), int(float(loc.split(', ')[2])))]
+                                        tracks = [(psd , locx, locy)]
                                         self.th_tracks = self.a.parent.updateTracks_csv(self,tracks)
                                         self.th_tracks.start()
                                      if adp:
@@ -227,7 +229,7 @@ class KFP_AddPOI(threading.Thread):
                                              r = t.getroot()
                                              for u in r.findall('user'):
                                                  if u.get('steamId') == sid and u.get('rank') >= '1' and u.get('allowed') == '1':
-                                                     self.addPoi(poiPath, psdR, sid, poiName, loc, sock)
+                                                     self.addPoi(poiPath, psdR, sid, poiName, str(locx) + ", " + str(locy), self.sock)
                                                  else:
                                                      self.a.updatePoi('Bad user \"' + psdR + '\" steamId: ' + sid)
                                                      self.a.sendAllData('say \"[FF0000]' + psdRPOI + ', your are not allowed to add a poi.\"')
@@ -376,10 +378,14 @@ class KFP_AddPOI(threading.Thread):
             strs2 = StringVar()
             strs3 = StringVar()
             strs4 = StringVar()
+            strsP1 = StringVar()
+            strsP2 = StringVar()
             strs1.set(self.parent.parent.settings['sPort'])
             strs2.set(self.parent.parent.settings['sIp'])
             strs3.set(self.parent.parent.settings['sPass'])
             strs4.set("say ")
+            strsP1.set(self.parent.parent.settings['http_server_port'])
+            strsP2.set(int(self.parent.parent.settings['http_server_port'])+5)
             self.entry_1 = Entry(self.tabPage.pages['Logs'].frame, textvariable=strs4, bg="#000000", fg="#ff0000", width=0,)
             self.entry2 = Entry(self.tabPage.pages['Logs'].frame, textvariable=strs1, justify="center", relief="flat", width=0,)
             self.entry3 = Entry(self.tabPage.pages['Logs'].frame, textvariable=strs3, justify="center", relief="flat", width=0, show="*")
@@ -459,14 +465,20 @@ class KFP_AddPOI(threading.Thread):
             self.texthl1 = Text(self.tabPage.pages['HTTP_Server'].frame, bg="#000000", fg="#ff0000", height=0, width=0,)
             self.labelhl1.grid(in_=self.tabPage.pages['HTTP_Server'].frame, column=1, row=1, columnspan=1, ipadx=0, ipady=0, padx=5, pady=0, rowspan=1, sticky="w")
             self.buttonh2 = Button(self.tabPage.pages['HTTP_Server'].frame, text="Start HTTP Server", command=self.startHTTPS)
-            self.buttonh2.grid(in_=self.tabPage.pages['HTTP_Server'].frame, column=2, row=1, columnspan=1, rowspan=1, ipadx=0, ipady=0, padx=5, pady=5, sticky="ew")
+            self.buttonh2.grid(in_=self.tabPage.pages['HTTP_Server'].frame, column=2, row=1, columnspan=2, rowspan=1, ipadx=0, ipady=0, padx=5, pady=5, sticky="ew")
             self.buttonh3 = Button(self.tabPage.pages['HTTP_Server'].frame, text="Shutdown HTTP Server", command=self.shutdHTTPS)
-            self.buttonh3.grid(in_=self.tabPage.pages['HTTP_Server'].frame, column=2, row=2, columnspan=1, rowspan=1, ipadx=0, ipady=0, padx=5, pady=5, sticky="ew")
+            self.buttonh3.grid(in_=self.tabPage.pages['HTTP_Server'].frame, column=2, row=3, columnspan=2, rowspan=1, ipadx=0, ipady=0, padx=5, pady=5, sticky="ew")
+            self.entryP1 = Entry(self.tabPage.pages['HTTP_Server'].frame, textvariable=strsP1, justify="center", relief="flat", width=0,)
+            self.entryP1.grid(in_=self.tabPage.pages['HTTP_Server'].frame, column=2, row=2, columnspan=1, ipadx=0, ipady=0, padx=5, pady=5, rowspan=1, sticky="ew")
+            self.entryP2 = Entry(self.tabPage.pages['HTTP_Server'].frame, textvariable=strsP2, justify="center", relief="flat", width=0,)
+            self.entryP2.grid(in_=self.tabPage.pages['HTTP_Server'].frame, column=3, row=2, columnspan=1, ipadx=0, ipady=0, padx=5, pady=5, rowspan=1, sticky="ew")
 
-            self.texthl1.grid(in_=self.tabPage.pages['HTTP_Server'].frame, column=1, row=2, columnspan=1, ipadx=5, ipady=0, padx=2, pady=0, rowspan=2, sticky="news")
+            self.texthl1.grid(in_=self.tabPage.pages['HTTP_Server'].frame, column=1, row=2, columnspan=1, ipadx=5, ipady=0, padx=2, pady=0, rowspan=4, sticky="news")
             self.tabPage.pages['HTTP_Server'].frame.grid_rowconfigure(1, weight=0, minsize=15, pad=0)
-            self.tabPage.pages['HTTP_Server'].frame.grid_rowconfigure(2, weight=1, minsize=509, pad=0)
-
+            self.tabPage.pages['HTTP_Server'].frame.grid_rowconfigure(2, weight=0, minsize=20, pad=0)
+            self.tabPage.pages['HTTP_Server'].frame.grid_rowconfigure(3, weight=0, minsize=20, pad=0)
+            self.tabPage.pages['HTTP_Server'].frame.grid_rowconfigure(4, weight=1, minsize=469, pad=0)
+            
             self.tabPage.pages['HTTP_Server'].frame.grid_columnconfigure(1, weight=1, minsize=800, pad=0)
             self.tabPage.pages['HTTP_Server'].frame.grid_columnconfigure(2, weight=0, minsize=40, pad=0)
             self.rootM.grid_columnconfigure(1, weight=1, minsize=200, pad=0)
