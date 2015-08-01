@@ -249,7 +249,7 @@ class KFP_AddPOI(threading.Thread):
         def __init__(self, parent):
             threading.Thread.__init__(self)
             self.parent = parent
-            self.connection = ftp.FTP('ftp.ketchu-free-party.fr', 'ketchufr', 'placebo13')
+            self.connection = ftp.FTP('ftp.ketchu-free-party.fr', 'ketchufr', '*****')
             with self.parent.parent.Capturing() as self.output:
                 
                 print self.ls()
