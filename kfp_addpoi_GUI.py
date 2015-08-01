@@ -675,7 +675,6 @@ class KFP_AddPOI(threading.Thread):
             self.sId = value
             self.parent = parent
         def run(self):
-            print 'run'
             t = ET.parse('./PlayersList2.xml')
             r = t.getroot()
             found= False
