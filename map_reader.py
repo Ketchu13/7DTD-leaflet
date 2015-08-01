@@ -110,7 +110,7 @@ class Advanced_MapReader(threading.Thread):
                 from Tkinter import Tk
                 root = Tk()
                 root.withdraw()
-                opts = {"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
+                opts = {"initialdir": os.path.expanduser("~\\AppData\\Roaming\\7DaysToDie\\Saves\\Random Gen\\"),
                         "title": "Choose player path that contain .map files"}
                 self.settings['game_player_path'] = tkFileDialog.askdirectory(**opts)
             except ImportError:
