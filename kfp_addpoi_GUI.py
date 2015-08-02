@@ -60,8 +60,8 @@ class KFP_AddPOIGui(threading.Thread):
         print " -i \t Do not read /addpoi command of players"
         print " -x \t Do not write players track in csv files"
         print " -h 8080 Http Server Port(default 8081) (Optional)"
-        print " -w \"C:\\...\\whitelist.xml\":\t\t Authorized users list path..."
-        print " -k \"C:\\...\\POIList.xml\":\t\t POI list xml..."
+        print " -w \"C:\\...\\xml\\POIwhitelist.xml\":\t\t Authorized users list path..."
+        print " -k \"C:\\...\\xml\\POIList.xml\":\t\t POI list xml..."
         print " -v \t\t\t\t Show received data (0=False, 1=True)..."
         print " -c \"www\":\t\t The folder that contain your index.html (Optional)"
         print " -newest Keep track of updates and write the last version of tiles. This will show players bases on map.(Optional)"
@@ -292,7 +292,7 @@ class KFP_AddPOIGui(threading.Thread):
             self.value = value
 
         def run(self):
-            t = ET.parse('./players.xml')
+            t = ET.parse('./xml/players.xml')
             r = t.getroot()
             for player in r.findall('player'):
                 try:
@@ -411,7 +411,7 @@ class KFP_AddPOIGui(threading.Thread):
                          if (request_method == 'GET'):
                             response_content = b"<html><head>" + \
                                     "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">"+ \
-                                    "</head><body style=\"background-image:url(404.gif);"+ \
+                                    "</head><body style=\"background-image:url(./images/404.gif);"+ \
                                     "background-repeat:no-repeat; background-position:center center;"+ \
                                     "color: red;"+ \
                                     "background-color:black;\"><h2>KFP ZBot Lite Simple Web Server</h2>"+ \
@@ -756,7 +756,7 @@ class KFP_AddPOIGui(threading.Thread):
             self.sId = value
             self.parent = parent
         def run(self):
-            t = ET.parse('./PlayersList2.xml')
+            t = ET.parse('./xml/PlayersList2.xml')
             r = t.getroot()
             found= False
             for player in r.findall('player'):
