@@ -37,7 +37,7 @@ from threading import Thread
 import threading
 import time
 
-from TabPages import *
+from libs.TabPages import *
 import xml.etree.ElementTree as ET
 
 class KFP_AddPOIGui(threading.Thread):
