@@ -22,10 +22,7 @@
 #
 # @author Nicolas Fortin github@nettrader.fr https://github.com/nicolas-f
 # @author Nicolas Grimaud ketchu13@hotmail.com https://github.com/ketchu13
- 
-from Tkinter import *
-import ftplib as ftp 
-from cStringIO import StringIO
+
 import getopt
 import os
 import re
@@ -37,7 +34,6 @@ from threading import Thread
 import threading
 import time
 
-from TabPages import *
 import xml.etree.ElementTree as ET
 
 class KFP_AddPOI(threading.Thread):
