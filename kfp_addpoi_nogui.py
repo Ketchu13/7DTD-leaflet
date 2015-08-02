@@ -65,7 +65,6 @@ class KFP_AddPOI(threading.Thread):
 
     def __init__(self,parent):
         threading.Thread.__init__(self)
-        global fen
         self.parent = parent
         self.settings = self.parent.settings
 
@@ -85,33 +84,30 @@ class KFP_AddPOI(threading.Thread):
             print "You must define the leaflet poi list."
             exit(-1)
 
-        #sAddress = (self.settings['sIp'], int(self.settings['sPort']))
-        
         self.parent = parent
-        
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
         sAdress = (self.settings['sIp'] , int(self.settings['sPort']))
         self.sock.connect(sAdress)
         self.th_R = self.ThreadReception(self.sock, self)
         self.th_R.start()
+
     def sendAllData(self, value):
             s = self.sendData(self.sock, value)
-            print s
             s.start()
             s.join()
-            
+
     def rfrshPlyLst(self):
             t = Timer(59.0, self.rfrshPlyLst)
             t.start()
             self.sendAllData('lp\n')
-            
+
     class ThreadReception(threading.Thread):
         def __init__(self, sock, parent):
             threading.Thread.__init__(self)
             self.sock = sock  # réf. du socket de connexion
             self.parent = parent
             self.exiter = False
-            
+
         def exite(self):
             if not self.exiter:
                 self.exiter = True
@@ -172,6 +168,7 @@ class KFP_AddPOI(threading.Thread):
                     d = d.decode(encoding='UTF-8', errors='ignore')
                     s1 = d.replace(b'\n', b'')
                     s2 = s1.split(b'\r')
+
                     if 'Please enter password:' in d:
                         #self.parent.update('Connected...\nSending password...')
                         self.parent.sendAllData(sPass)
@@ -271,7 +268,6 @@ class KFP_AddPOI(threading.Thread):
             self.value = value 
         def run(self):
             try:
-                print self.value
                 self.sock.send(self.value + '\n')
             except Exception as e:
                 print e
