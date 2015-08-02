@@ -70,7 +70,7 @@ class Advanced_MapReader(threading.Thread):
 
         # parse command line options
         try:
-            for opt, value in getopt.getopt(sys.argv[1:], "g:t:z:n:s:h:p:i:x:w:k:v:c:b:")[0]:
+            for opt, value in getopt.getopt(sys.argv[1:], "g:t:z:n:s:h:p:i:x:w:k:v:c:b:f:")[0]:
                 if opt == "-g":
                      self.settings['game_player_path'] = value
                 elif opt == "-t":
@@ -102,6 +102,8 @@ class Advanced_MapReader(threading.Thread):
                     self.settings['www'] = value
                 elif opt == "-b":
                     self.settings['GUI'] = value
+                elif opt == "-f":
+                    self.settings['FTPInfos'] = value
         except getopt.error, msg:
             print str(msg)
             self.usage()
@@ -406,6 +408,8 @@ class Advanced_MapReader(threading.Thread):
         print " -c \"www\":\t\t The folder that contain your index.html (Optional)"
         print " -newest Keep track of updates and write the last version of tiles. This will show players bases on map.(Optional)"
         print " -b gui:\t\t Use Gui version (Optional)"
+        print " -f FTPHost:UserName:PassWord \t FTP server connection infos (Optional)"
+
 
     def run(self):
         pass

@@ -57,14 +57,16 @@ class KFP_AddPOIGui(threading.Thread):
         print      " It is in the form of 4^n tiles.It will extract a grid of 2^n*16 tiles on each side.(Optional)"
         print " -s telnethost:port \t7DTD server ip and port (telnet port, default 8081) (Optional)"
         print " -p CHANGEME Password of telnet, default is CHANGEME (Optional)"
-        print " -i \t Do not read /addpoi command of players"
-        print " -x \t Do not write players track in csv files"
+        print " -i True \t Do not read /addpoi command of players"
+        print " -x True \t Do not write players track in csv files"
         print " -h 8080 Http Server Port(default 8081) (Optional)"
-        print " -w \"C:\\...\\xml\\POIwhitelist.xml\":\t\t Authorized users list path..."
+        print " -w \"C:\\...\\xml\\whitelist.xml\":\t\t Authorized users list path..."
         print " -k \"C:\\...\\xml\\POIList.xml\":\t\t POI list xml..."
-        print " -v \t\t\t\t Show received data (0=False, 1=True)..."
+        print " -v True \t\t\t\t Show received data (0=False, 1=True)..."
         print " -c \"www\":\t\t The folder that contain your index.html (Optional)"
         print " -newest Keep track of updates and write the last version of tiles. This will show players bases on map.(Optional)"
+        print " -b gui:\t\t Use Gui version (Optional)"
+        print " -f FTPHost:UserName:PassWord \t FTP server connection infos (Optional)"
 
     def __init__(self,parent):
         threading.Thread.__init__(self)
@@ -249,7 +251,9 @@ class KFP_AddPOIGui(threading.Thread):
         def __init__(self, parent):
             threading.Thread.__init__(self)
             self.parent = parent
-            self.connection = ftp.FTP('ftp.ketchu-free-party.fr', 'ketchufr', '*****')
+            self.FtpInfos = self.parent.parent.settings['FTPInfos'].split(':')
+            self.host = self.FtpInfos
+            self.connection = ftp.FTP(self.FtpInfos[0],self.FtpInfos[1],self.FtpInfos[2])
             with self.parent.parent.Capturing() as self.output:
                 
                 print self.ls()
