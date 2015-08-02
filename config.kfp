@@ -10,4 +10,4 @@ ignTrack=False
 store_history=True
 game_player_path=""
 http_server_port=8080
-tile_path="tiles"
+tile_path=tiles

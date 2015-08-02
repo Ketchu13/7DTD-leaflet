@@ -27,7 +27,7 @@ import os
 import time
 import sqlite3
 import shutil
-from kfp_addpoi_GUI import *
+from kfp_addpoi_nogui import *
 try:
     from PIL import Image, ImageOps
 except ImportError:
@@ -41,7 +41,7 @@ class Advanced_MapReader(threading.Thread):
         threading.Thread.__init__(self)
         self.settings = {}
         self.settings['game_player_path'] = None
-        self.settings['tile_path'] = "tiles"
+        self.settings['tile_path'] = r'./tiles'
         self.settings['tile_zoom'] = 8
         self.settings['store_history'] = False
         self.settings['telnet_server'] = ""
