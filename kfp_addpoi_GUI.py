@@ -40,7 +40,7 @@ import time
 from TabPages import *
 import xml.etree.ElementTree as ET
 
-class KFP_AddPOI(threading.Thread):
+class KFP_AddPOIGui(threading.Thread):
     def usage(self):
         print "This program extract and merge map tiles of all players.Then write it in a folder with verious zoom"
         print " levels. In order to hide player bases, this program keep only the oldest version of each tile by default."

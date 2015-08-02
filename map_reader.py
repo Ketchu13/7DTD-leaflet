@@ -28,6 +28,7 @@ import time
 import sqlite3
 import shutil
 from kfp_addpoi_GUI import *
+from kfp_addpoi_nogui import *
 try:
     from PIL import Image, ImageOps
 except ImportError:
@@ -53,6 +54,7 @@ class Advanced_MapReader(threading.Thread):
         self.settings['poiPath'] = ""
         self.settings['verbose'] = False
         self.settings['www'] = ""
+        self.settings['GUI'] = False
         # parse configfile options
         try:
             f = open('./config.kfp', "r")
@@ -68,7 +70,7 @@ class Advanced_MapReader(threading.Thread):
 
         # parse command line options
         try:
-            for opt, value in getopt.getopt(sys.argv[1:], "g:t:z:n:s:h:p:i:x:w:k:v:c:")[0]:
+            for opt, value in getopt.getopt(sys.argv[1:], "g:t:z:n:s:h:p:i:x:w:k:v:c:b:")[0]:
                 if opt == "-g":
                      self.settings['game_player_path'] = value
                 elif opt == "-t":
@@ -98,6 +100,8 @@ class Advanced_MapReader(threading.Thread):
                     self.settings['verbose'] = True
                 elif opt == "-c":
                     self.settings['www'] = value
+                elif opt == "-b":
+                    self.settings['GUI'] = value
         except getopt.error, msg:
             print str(msg)
             self.usage()
@@ -127,7 +131,11 @@ class Advanced_MapReader(threading.Thread):
                 exit(-1)
             self.create_tiles(self.map_files, self.settings['tile_path'], self.settings['tile_zoom'], self.settings['store_history'])
         else:
-            th_addPoi = KFP_AddPOI(self)
+            print self.settings['GUI']
+            if self.settings['GUI'] == "gui":
+                th_addPoi = KFP_AddPOIGui(self)
+            else: 
+                th_addPoi = KFP_AddPOI(self)
             th_addPoi.start
             exit(-1)
 
@@ -383,21 +391,21 @@ class Advanced_MapReader(threading.Thread):
         print    " - Update players csv coordinates file\n"
         print "Usage:"
         print "map_reader -g XX [options]"
-        print " -g \"C:\\Users..\\AppData\\Roaming\\7DaysToDie\\Saves\\Random Gen\\yourGameName\\Player: The folder that contain .map files"
+        print " -g \"C:\\Users..\":\t The folder that contain .map files"
         print " -t \"tiles\":\t\t The folder that will contain tiles (Optional)"
         print " -z 8:\t\t\t\t Zoom level 4-n. Number of tiles to extract around position 0,0 of map." 
         print      " It is in the form of 4^n tiles.It will extract a grid of 2^n*16 tiles on each side.(Optional)"
         print " -s telnethost:port \t7DTD server ip and port (telnet port, default 8081) (Optional)"
         print " -p CHANGEME Password of telnet, default is CHANGEME (Optional)"
-        print " -i 0 \t Do not read /addpoi command of players"
-        print " -x 0 \t Do not write players track in csv files"
+        print " -i True \t Do not read /addpoi command of players"
+        print " -x True \t Do not write players track in csv files"
         print " -h 8080 Http Server Port(default 8081) (Optional)"
         print " -w \"C:\\...\\whitelist.xml\":\t\t Authorized users list path..."
         print " -k \"C:\\...\\POIList.xml\":\t\t POI list xml..."
-        print " -v 1 \t\t\t\t Show received data (0=False, 1=True)..."
+        print " -v True \t\t\t\t Show received data (0=False, 1=True)..."
         print " -c \"www\":\t\t The folder that contain your index.html (Optional)"
-        print " -newest Keep track of updates and write the last version of tiles. This will show players bases on map. " 
-        print     "(Optional)"
+        print " -newest Keep track of updates and write the last version of tiles. This will show players bases on map.(Optional)"
+        print " -b gui:\t\t Use Gui version (Optional)"
 
     def run(self):
         pass
