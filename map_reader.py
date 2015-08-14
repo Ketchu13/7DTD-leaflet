@@ -204,18 +204,28 @@ class Advanced_MapReader(threading.Thread):
             with open(map_file, "rb") as curs:
                 # Check beginning of file
                 if not curs.read(4) == "map\0":
-                    print "Skip "+map_file+" wrong file header"
+                    print "Skip "+os.path.basename(map_file)+" wrong file header"
                     return
-                curs.read(1)
+                ## Read version
+                version = struct.unpack("I", curs.read(4))[0]
+
+                tiles_pos = 524297
+                if version == 2:
+                    tiles_pos = 524300
+                else:
+                    print "Warning old map version: ", version
+                    curs.seek(5)
+
                 #######################
                 # read index
                 num = struct.unpack("I", curs.read(4))[0]
+
                 # read tiles position
                 tiles_index = [struct.unpack("i", curs.read(4))[0] for i in xrange(num)]
                 #######################
                 # read tiles pixels
                 if not index_only:
-                    curs.seek(524297)
+                    curs.seek(tiles_pos)
                     for i in xrange(num):
                         if self.store_history or not self.is_tile_stored(tiles_index[i]):
                             # extract 16-bytes pixel 16*16 tile
@@ -226,7 +236,7 @@ class Advanced_MapReader(threading.Thread):
                                     self.new_tiles += 1
                             else:
                                 # Corrupted file
-                                print "Skip "+map_file+" may be already used by another process in import_file"
+                                print "Skip "+os.path.basename(map_file)+" may be already used by another process"
                                 break
                         else:
                             curs.seek(curs.tell() + 512)
@@ -379,9 +389,10 @@ class Advanced_MapReader(threading.Thread):
         return self.map_files
 
     def copyMapFile(self,path,value):
-        if not os.path.isdir('Map'):
-            os.mkdir('Map')
-        shutil.copy(os.path.join(path,value),os.path.join("Map",value) )
+        mapPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Map')
+        if not os.path.isdir(mapPath):
+            os.mkdir(mapPath)
+        shutil.copy(os.path.join(path,value),os.path.join(mapPath,value) )
         """    def copyMapFiles(self,path,value):
         shutil.copytree(os.path.join(path,value),os.path.join("Map",value) )
         """
