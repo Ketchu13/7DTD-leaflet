@@ -204,7 +204,7 @@ class Advanced_MapReader(threading.Thread):
             with open(map_file, "rb") as curs:
                 # Check beginning of file
                 if not curs.read(4) == "map\0":
-                    print "Skip "+os.path.basename(map_file)+" wrong file header"
+                    print "Skip "+map_file+" wrong file header"
                     return
                 curs.read(1)
                 #######################
@@ -226,7 +226,7 @@ class Advanced_MapReader(threading.Thread):
                                     self.new_tiles += 1
                             else:
                                 # Corrupted file
-                                print "Skip "+os.path.basename(map_file)+" may be already used by another process"
+                                print "Skip "+map_file+" may be already used by another process in import_file"
                                 break
                         else:
                             curs.seek(curs.tell() + 512)
@@ -264,7 +264,7 @@ class Advanced_MapReader(threading.Thread):
             try:
                 reader.import_file(map_file, False)
             except struct.error:
-                print "Skip "+os.path.basename(map_file)+" may be already used by another process"
+                print "Skip "+map_file+" may be already used by another process in create_base_tiles"
         # make zoom folder
         z_path = os.path.join(tile_output_path, str(tile_level))
         if not os.path.exists(z_path):

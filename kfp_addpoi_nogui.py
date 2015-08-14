@@ -253,7 +253,7 @@ class KFP_AddPOI(threading.Thread):
         def run(self):
             try:
                 import csv
-                Fn = (r".\players\tracks.csv")
+                Fn = os.path.join('.', 'players', 'tracks.csv')
                 f = open(Fn, 'ab')
                 w = csv.writer(f)
                 w.writerows(self.value)
