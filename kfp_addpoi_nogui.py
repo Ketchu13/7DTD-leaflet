@@ -225,8 +225,8 @@ class KFP_AddPOI(threading.Thread):
                                      sid = s[l + 8:s.find(',', l)]
                                      locTp = s[j + 7:]
                                      loc = locTp[:locTp.find('), rot')]#.split(', ')
-                                     locx = int(float(loc.split(', ')[0]))
-                                     locy = int(float(loc.split(', ')[2]))
+                                     locy = int(float(loc.split(', ')[0]))
+                                     locx = int(float(loc.split(', ')[2]))
                                      if self.parent.parent.settings['ignTrack']:
                                         tracks = [(psd , locx, locy)]
                                         self.th_tracks = self.parent.updateTracks_csv(self,tracks)
