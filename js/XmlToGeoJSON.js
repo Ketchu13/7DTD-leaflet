@@ -48,7 +48,7 @@ function ShowPOILocation() {
 							"type": "Feature",
 							"geometry": {
 								"type": "Point",
-								"coordinates": [lpblock[0], lpblock[2]]
+								"coordinates": [lpblock[1], lpblock[0]]
 							},						
 							"properties": prop0
 						};							
