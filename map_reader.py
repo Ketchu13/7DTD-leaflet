@@ -379,6 +379,8 @@ class Advanced_MapReader(threading.Thread):
         return self.map_files
 
     def copyMapFile(self,path,value):
+        if not os.path.isdir('Map'):
+            os.mkdir('Map')
         shutil.copy(os.path.join(path,value),os.path.join("Map",value) )
         """    def copyMapFiles(self,path,value):
         shutil.copytree(os.path.join(path,value),os.path.join("Map",value) )
