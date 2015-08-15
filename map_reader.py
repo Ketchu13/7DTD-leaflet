@@ -224,7 +224,7 @@ class Advanced_MapReader(threading.Thread):
                 #######################
                 # read tiles pixels
                 if not index_only:
-                    curs.seek(524300)
+                    curs.seek(tiles_pos)
                     for i in xrange(num):
                         if self.store_history or not self.is_tile_stored(tiles_index[i]):
                             # extract 16-bytes pixel 16*16 tile
