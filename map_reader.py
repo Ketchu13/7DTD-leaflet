@@ -210,6 +210,7 @@ class Advanced_MapReader(threading.Thread):
                 #######################
                 # read index
                 num = struct.unpack("I", curs.read(4))[0]
+
                 # read tiles position
                 tiles_index = [struct.unpack("i", curs.read(4))[0] for i in xrange(num)]
                 #######################
