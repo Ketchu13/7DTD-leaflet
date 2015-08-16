@@ -206,16 +206,7 @@ class Advanced_MapReader(threading.Thread):
                 if not curs.read(4) == "map\0":
                     print "Skip "+os.path.basename(map_file)+" wrong file header"
                     return
-                ## Read version
-                version = struct.unpack("I", curs.read(4))[0]
-
-                tiles_pos = 524297
-                if version == 2:
-                    tiles_pos = 524300
-                else:
-                    print "Warning old map version: ", version
-                    curs.seek(5)
-
+                curs.read(1)
                 #######################
                 # read index
                 num = struct.unpack("I", curs.read(4))[0]
@@ -224,7 +215,7 @@ class Advanced_MapReader(threading.Thread):
                 #######################
                 # read tiles pixels
                 if not index_only:
-                    curs.seek(524300)
+                    curs.seek(524297)
                     for i in xrange(num):
                         if self.store_history or not self.is_tile_stored(tiles_index[i]):
                             # extract 16-bytes pixel 16*16 tile
