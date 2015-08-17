@@ -104,28 +104,29 @@ class KFP_AddPOIGui(threading.Thread):
         def exite(self):
             if not self.exiter:
                 self.exiter = True
+                
         def writePoi(self, x, psdR, sid, poiName, loc):
              try:
                  old = self.readPoi(x)
-                 with open(x, "r+") as f:
+                 with open(x, "w") as f:
                      f.write(old + '\n<poi sname=\"' + psdR + '\" steamId=\"' + sid + '\" pname=\"' + poiName + '\" pos=\"' + loc + '\" icon=\"farm\" />\n</poilist>')
                  old = self.readPoi(x)   
                  return True
-                 
-                
-             except IOError:
+             except IOError(e):
+                 print "Error in read/write poi: " + str(e)
                  return False
 
         def readPoi(self, x):
              try:
                  with open(x, "r") as f:
                      s = ''.join(f.readlines()[:-1])[:-1]
+                     print s
                      if len(s) <= 0:
                          s = '<poilist>\n'
                      self.a.updatePOIList(s)
                      return s
              except IOError as e:
-                 print ("error", e)
+                 print ("Error", e)
 
         def addPoi(self, x, psdR, sid, poiName, loc, sock):
              try:
@@ -254,13 +255,10 @@ class KFP_AddPOIGui(threading.Thread):
             self.FtpInfos = self.parent.parent.settings['FTPInfos'].split(':')
             self.host = self.FtpInfos
             self.connection = ftp.FTP(self.FtpInfos[0],self.FtpInfos[1],self.FtpInfos[2])
-            with self.parent.parent.Capturing() as self.output:
-                
-                print self.ls()
+            with self.parent.parent.Capturing() as self.output:                
+                print self.ls()                
             for line in self.output:
-                self.parent.updateFTP(line)
-
-       
+                self.parent.updateFTP(line)       
         def cd(self,rep):
             return self.connection.cwd(rep)
         def ls(self):
@@ -294,7 +292,6 @@ class KFP_AddPOIGui(threading.Thread):
             threading.Thread.__init__(self)
             self.parent = parent
             self.value = value
-
         def run(self):
             t = ET.parse('./xml/players.xml')
             r = t.getroot()
@@ -328,12 +325,11 @@ class KFP_AddPOIGui(threading.Thread):
             try:
                 import csv
                 Fn = (r".\players\tracks.csv")
-                f = open(Fn, 'ab')
-                w = csv.writer(f)
-                w.writerows(self.value)
-                f.close
+                with open(Fn, 'ab') as f:
+                    w = csv.writer(f)
+                    w.writerows(self.value)                
             except Exception as e:
-                print e
+                print "Error in updateTracks: " + str(e)
 
     """ HTTP SERVER """
     class httpServer(threading.Thread):
@@ -378,7 +374,6 @@ class KFP_AddPOIGui(threading.Thread):
                 h = 'HTTP/1.1 200 OK\n'
              elif(code == 404):
                 h = 'HTTP/1.1 404 Not Found\n'
-             # write further headers
              current_date = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime()) 
              h += 'Date: ' + current_date + '\n'
              h += 'Server: KFP-Python-HTTP-Server\n'
@@ -430,8 +425,6 @@ class KFP_AddPOIGui(threading.Thread):
                      self.GUI.updateHTTP("Unknown HTTP request method: " + request_method)
 
         def graceful_shutdown(sig, dummy):
-            """ This function shuts down the server. It's triggered
-            by SIGINT signal """
             s.shutdown()  # shut down the server
             import sys
             sys.exit(1)

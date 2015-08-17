@@ -92,14 +92,19 @@ class KFP_AddPOI(threading.Thread):
         self.th_R.start()
 
     def sendAllData(self, value):
-            s = self.sendData(self.sock, value)
-            s.start()
-            s.join()
+        s = self.sendData(self.sock, value)
+        s.start()
+        s.join()
 
     def rfrshPlyLst(self):
-            t = Timer(59.0, self.rfrshPlyLst)
-            t.start()
+        try:
+            print "\n\tSend lp\n\n"
             self.sendAllData('lp\n')
+            t = Timer(20.0, self.rfrshPlyLst)
+            t.start()
+        except Exception(e):
+            print "Error: " + str(e)
+        
 
     class ThreadReception(threading.Thread):
         def __init__(self, sock, parent):
