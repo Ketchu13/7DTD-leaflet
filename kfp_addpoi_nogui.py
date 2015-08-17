@@ -115,7 +115,7 @@ class KFP_AddPOI(threading.Thread):
         def writePoi(self, x, psdR, sid, poiName, loc):
              try:
                  old = self.readPoi(x)
-                 with open(x, "w") as f:
+                 with open(x, "r+") as f:
                      f.write(old + '\n<poi sname=\"' + psdR + '\" steamId=\"' + sid + '\" pname=\"' + poiName + '\" pos=\"' + loc + '\" icon=\"farm\" />\n</poilist>')
                  old = self.readPoi(x)   
                  return True
