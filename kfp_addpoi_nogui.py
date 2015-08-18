@@ -124,13 +124,11 @@ class KFP_AddPOI(threading.Thread):
 
         @staticmethod
         def writepoi(poilist_path, pseudo_request, sid, poiname, poi_location):
+            print "\n\n\n" + poiname
             try:
-                print "poilist_path: " + poilist_path + "\n"
                 with open(poilist_path, "r") as f:
                     poilist_src = ''.join(f.readlines()[:-1])[:-1]
-                    print "poilist_src: " + poilist_src + "\n"
                     if len(poilist_src) <= 0:
-                        print "poilist_src2: " + poilist_src
                         poilist_src = '<poilist>\n'
                 with open(poilist_path, "r+") as f:
                     f.write(poilist_src + '\n' +
@@ -142,7 +140,7 @@ class KFP_AddPOI(threading.Thread):
                     '</poilist>')
                 return True
             except IOError as e:
-                print ("\n\nError in writepoi: ", e)
+                print ("Error in writepoi: ", e)
                 return False
 
         def addpoi(self, poilist_path, pseudo_request, sid, poiname, poi_location):
@@ -209,7 +207,7 @@ class KFP_AddPOI(threading.Thread):
                                     adp = True
                                     self.sock.sendall('lp\n')
                                     pseudo_poi = pseudo_temp[:pseudo_temp.find(': ')]
-                                    poiname = str_line[str_line.find(addpoi_cmd) + len(addpoi_cmd):]
+                                    poiname = str_line[str_line.find(addpoi_cmd) + len(addpoi_cmd)+1:]
                                     if re.search(r'^[A-Za-z0-9Ü-ü_ \-]{3,25}$', poiname):
                                         pseudo_request = pseudo_poi
                                     else:
