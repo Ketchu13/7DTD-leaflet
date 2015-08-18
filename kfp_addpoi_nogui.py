@@ -109,7 +109,7 @@ class KFP_AddPOI(threading.Thread):
     class ThreadReception(threading.Thread):
         def __init__(self, sock, parent):
             threading.Thread.__init__(self)
-            self.sock = sock  # réf. du socket de connexion
+            self.sock = sock
             self.parent = parent
             self.exiter = False
 
@@ -286,7 +286,7 @@ class KFP_AddPOI(threading.Thread):
             self.sId = value
             self.parent = parent
         def run(self):
-            t = ET.parse('./xml/PlayersList2.xml')
+            t = ET.parse(os.path.join('.', 'xml' , 'PlayersList2.xml'))
             r = t.getroot()
             found= False
             for player in r.findall('player'):
@@ -307,6 +307,6 @@ class KFP_AddPOI(threading.Thread):
             self.parent = parent
             self.value = value 
         def run(self):
-            self.parent.parent.copyMapFile(self.parent.parent.settings['game_player_path'], self.value+".map")
+            self.parent.parent.copyMapFile(self.parent.parent.settings['game_player_path'], self.value + ".map")
             self.parent.parent.map_files = self.parent.parent.read_folder("Map")
             self.parent.parent.create_tiles(self.parent.parent.map_files, self.parent.parent.settings['tile_path'], self.parent.parent.settings['tile_zoom'], self.parent.parent.settings['store_history'])
