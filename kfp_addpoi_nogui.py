@@ -251,7 +251,7 @@ class KFP_AddPOI(threading.Thread):
                                         if not allow:
                                             self.sock.sendall('say \"[FF0000]' +
                                                               pseudo_poi +
-                                                              ', your are not allowed to add a poi.\"')
+                                                              ', sorry, your are not allowed to add a poi.\"')
             print u"Client arrêté. connexion interrompue."
             self.sock.close()
 
