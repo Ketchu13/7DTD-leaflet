@@ -200,7 +200,7 @@ class KFP_AddPOI(threading.Thread):
                                             skip = True
                                 addpoi_cmd = '/addpoi'
                                 if skip:  # refresh players infos
-                                    self.sock.sendAll('lp\n')
+                                    self.sock.sendall('lp\n')
                                 elif addpoi_cmd in str_line:
                                     adp = True
                                     self.sock.sendall('lp\n')
