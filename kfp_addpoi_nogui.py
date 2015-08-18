@@ -247,6 +247,7 @@ class KFP_AddPOI(threading.Thread):
                                                 self.addpoi(poi_path, pseudo_request, sid, poiname, str(poiloc_x) + ", "
                                                             + str(poiloc_y))
                                                 allow = True
+                                                break
                                         if not allow:
                                             self.sock.sendall('say \"[FF0000]' +
                                                               pseudo_poi +
