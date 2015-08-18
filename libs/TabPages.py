@@ -9,8 +9,13 @@ TabSet -- A widget containing tabs (buttons) in one or more rows.
 """
 from Tkinter import *
 
-class InvalidNameError(Exception): pass
-class AlreadyExistsError(Exception): pass
+
+class InvalidNameError(Exception):
+    pass
+
+
+class AlreadyExistsError(Exception):
+    pass
 
 
 class TabSet(Frame):

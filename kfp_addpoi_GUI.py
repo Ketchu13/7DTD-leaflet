@@ -75,7 +75,7 @@ class KFP_AddPOIGui(threading.Thread):
         self.settings = self.parent.settings
 
         if self.settings['wLPath'] is None:  # Show gui to select poi whitelist folder
-            self.settings['wLPath'] = self.selFile({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
+            self.settings['wLPath'] = self.select_file({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
                                                "title": "Choose the Whiteliste that contain autorised users infos."})
 
         if len(self.settings['wLPath']) == 0:
@@ -83,7 +83,7 @@ class KFP_AddPOIGui(threading.Thread):
             exit(-1)
 
         if self.settings['poiPath'] is None:  # Show gui to select poi list.xml path
-            self.settings['poiPath'] = self.selFile({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
+            self.settings['poiPath'] = self.select_file({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
                         "title": "Choose the POIList.xml path."})
 
         if len(self.settings['poiPath']) == 0:
@@ -93,6 +93,17 @@ class KFP_AddPOIGui(threading.Thread):
         #sAddress = (self.settings['sIp'], int(self.settings['sPort']))
         fen = self.AddPOI_GUI(self)
         fen.start()
+
+    def select_file(self,opts):
+        try:
+            import tkFileDialog
+            from Tkinter import Tk
+            root = Tk()
+            root.withdraw()
+            return tkFileDialog.askopenfilename(**opts)
+        except ImportError:
+            self.usage()
+            exit(-1)
 
     class ThreadReception(threading.Thread):
         def __init__(self, conn, fen):
@@ -226,7 +237,7 @@ class KFP_AddPOIGui(threading.Thread):
                                         self.th_tracks = self.a.parent.updateTracks_csv(self,tracks)
                                         self.th_tracks.start()
                                      if adp:
-                                         if psdR == psd and not psdR == None:
+                                         if psdR == psd and not psdR is None:
                                              adp = False
                                              t = ET.parse(wLPath)
                                              r = t.getroot()
@@ -307,7 +318,7 @@ class KFP_AddPOIGui(threading.Thread):
                         pass
                     i = 0
                     for lpBlocks in player.findall('lpblock'):
-                        i = i +1
+                        i += 1
                         if self.value is None:
                             self.parent.updateKL('\t\tKeystone ' + str(i) + ': ' + lpBlocks.get('pos'))
                         elif self.value == steamId:
@@ -321,10 +332,11 @@ class KFP_AddPOIGui(threading.Thread):
             threading.Thread.__init__(self)
             self.parent = parent
             self.value = value
+
         def run(self):
             try:
                 import csv
-                Fn = (r".\players\tracks.csv")
+                Fn = r".\players\tracks.csv"
                 with open(Fn, 'ab') as f:
                     w = csv.writer(f)
                     w.writerows(self.value)                
@@ -370,9 +382,9 @@ class KFP_AddPOIGui(threading.Thread):
 
         def _gen_headers(self, code):
              h = ''
-             if (code == 200):
+             if code == 200:
                 h = 'HTTP/1.1 200 OK\n'
-             elif(code == 404):
+             elif code == 404:
                 h = 'HTTP/1.1 404 Not Found\n'
              current_date = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime()) 
              h += 'Date: ' + current_date + '\n'
@@ -393,21 +405,21 @@ class KFP_AddPOIGui(threading.Thread):
                      fileRqt = string.split(' ')
                      fileRqt = fileRqt[1]
                      fileRqt = fileRqt.split('?')[0]
-                     if (fileRqt == '/'):
+                     if fileRqt == '/':
                          fileRqt = '/index.html'
                      fileRqt = self.www + fileRqt
                      self.GUI.updateHTTP("Serving web page [" + fileRqt + "]")
                      # # Load file content
                      try:
                          file_handler = open(fileRqt, 'rb')
-                         if (request_method == 'GET'):
+                         if request_method == 'GET':
                              response_content = file_handler.read()
                          file_handler.close()
                          response_headers = self._gen_headers(200)
                      except Exception as e:
                          self.GUI.updateHTTP("Warning, file not found. Serving response code 404\n" + str(e))
                          response_headers = self._gen_headers(404)
-                         if (request_method == 'GET'):
+                         if request_method == 'GET':
                             response_content = b"<html><head>" + \
                                     "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">"+ \
                                     "</head><body style=\"background-image:url(./images/404.gif);"+ \
@@ -416,7 +428,7 @@ class KFP_AddPOIGui(threading.Thread):
                                     "background-color:black;\"><h2>KFP ZBot Lite Simple Web Server</h2>"+ \
                                     "<!--div>404 - Not Found</div--></body></html>"  
                      server_response = response_headers.encode()
-                     if (request_method == 'GET'):
+                     if request_method == 'GET':
                          server_response += response_content
                      conn.send(server_response)
                      self.GUI.updateHTTP("Closing connection with client")

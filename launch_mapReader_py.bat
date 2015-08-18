@@ -1,1 +1,1 @@
-map_reader.py -s 127.0.0.1:8081 -p CHANGEME -c "." -g "C:\Users\...\AppData\Roaming\7DaysToDie\Saves\Random Gen\YOURGAMENAME\Player" -k "./POIList.xml" -h 8089 -w "./POIWhiteList.xml" -v True -b gui
+python map_reader.py -s 127.0.0.1:8081 -p CHANGEME -c "." -g "C:\Users\...\AppData\Roaming\7DaysToDie\Saves\Random Gen\YOURGAMENAME\Player" -k "./POIList.xml" -h 8089 -w "./POIWhiteList.xml" -v True -b gui

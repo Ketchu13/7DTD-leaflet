@@ -1,4 +1,3 @@
- 
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # This file is part of 7dtd-prefabs.
@@ -37,24 +36,13 @@ except ImportError:
     raw_input()
     exit(-1)
 
-class Advanced_MapReader(threading.Thread):
+
+class AdvancedMapReader(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
-        self.settings = {}
-        self.settings['game_player_path'] = None
-        self.settings['tile_path'] = "tiles"
-        self.settings['tile_zoom'] = 8
-        self.settings['store_history'] = False
-        self.settings['telnet_server'] = ""
-        self.settings['password'] = ""
-        self.settings['http_server_port'] = ""
-        self.settings['ignRqt'] = False
-        self.settings['ignTrack'] = False
-        self.settings['wLPath'] = ""
-        self.settings['poiPath'] = ""
-        self.settings['verbose'] = False
-        self.settings['www'] = ""
-        self.settings['GUI'] = False
+        self.settings = {'game_player_path': None, 'tile_path': "tiles", 'tile_zoom': 8, 'store_history': False,
+                         'telnet_server': "", 'password': "", 'http_server_port': "", 'ignRqt': False,
+                         'ignTrack': False, 'wLPath': "", 'poiPath': "", 'verbose': False, 'www': "", 'GUI': False}
         # parse configfile options
         try:
             f = open('./config.kfp', "r")
@@ -65,14 +53,15 @@ class Advanced_MapReader(threading.Thread):
                     key = s[0].strip()
                     value = s[1].strip()
                     self.settings[key] = value
-        except:
+        except IOError as e:
             print("ERROR: file ./config.kfp does not exist or is improperly formatted")
+            print e
 
         # parse command line options
         try:
             for opt, value in getopt.getopt(sys.argv[1:], "g:t:z:n:s:h:p:i:x:w:k:v:c:b:f:")[0]:
                 if opt == "-g":
-                     self.settings['game_player_path'] = value
+                    self.settings['game_player_path'] = value
                 elif opt == "-t":
                     self.settings['tile_path'] = value
                 elif opt == "-z":
@@ -109,6 +98,7 @@ class Advanced_MapReader(threading.Thread):
             self.usage()
             raw_input()
             exit(-1)
+
         if self.settings['game_player_path'] is None:
             # Show gui to select tile folder
             try:
@@ -122,11 +112,13 @@ class Advanced_MapReader(threading.Thread):
             except ImportError:
                 self.usage()
                 exit(-1)
-                
+
         if len(self.settings['game_player_path']) == 0:
             print "You must define the .map game path"
             exit(-1)
+
         self.map_files = self.read_folder(self.settings['game_player_path'])
+
         if len(self.settings['telnet_server']) == 0:
             if len(self.map_files) == 0:
                 print "No .map files found in ", self.settings['game_player_path']
@@ -135,10 +127,11 @@ class Advanced_MapReader(threading.Thread):
         else:
             print self.settings['GUI']
             if self.settings['GUI'] == "gui":
-                th_addPoi = KFP_AddPOIGui(self)
+                th_addpoi = KFP_AddPOIGui(self)
+                th_addpoi.start()
             else: 
-                th_addPoi = KFP_AddPOI(self)
-            th_addPoi.start
+                th_addpoi = KFP_AddPOI(self)
+                th_addpoi.start()
             exit(-1)
 
     class MapReader:
@@ -149,7 +142,6 @@ class Advanced_MapReader(threading.Thread):
         new_tiles = 0
 
         def __init__(self, database_directory, store_history):
-            #threading.Thread.__init__(self)
             self.db = sqlite3.connect(os.path.join(database_directory, 'tile_history.db'))
             self.db.text_factory = str
             self.store_history = store_history
@@ -188,13 +180,13 @@ class Advanced_MapReader(threading.Thread):
                 return None
             if self.store_history:
                 data = self.db.execute("SELECT data FROM TILES WHERE POS=? ORDER BY T DESC LIMIT 1", [index]).fetchone()
-                if not data is None:
+                if data is not None:
                     return data[0]
                 else:
                     return None
             else:
                 data = self.db.execute("SELECT data FROM TILES WHERE POS=? LIMIT 1", [index]).fetchone()
-                if not data is None:
+                if data is not None:
                     return data[0]
                 else:
                     return None
@@ -206,20 +198,17 @@ class Advanced_MapReader(threading.Thread):
                 if not curs.read(4) == "map\0":
                     print "Skip "+os.path.basename(map_file)+" wrong file header"
                     return
-                ## Read version
+                #  Read version
                 version = struct.unpack("I", curs.read(4))[0]
-
                 tiles_pos = 524297
                 if version == 2:
                     tiles_pos = 524300
                 else:
                     print "Warning old map version: ", version
                     curs.seek(5)
-
                 #######################
                 # read index
                 num = struct.unpack("I", curs.read(4))[0]
-
                 # read tiles position
                 tiles_index = [struct.unpack("i", curs.read(4))[0] for i in xrange(num)]
                 #######################
@@ -252,15 +241,18 @@ class Advanced_MapReader(threading.Thread):
             os.mkdir(tile_output_path)
         self.create_base_tiles(player_map_path, tile_output_path, tile_level, store_history)
         self.create_low_zoom_tiles(tile_output_path, tile_level)
+
     # Convert X Y position to MAP file index
-    def index_from_xy(self,x, y):
+    def index_from_xy(self, x, y):
         return (y - 16) << 16 | (x & 65535)
     
-    def create_base_tiles(self,player_map_path, tile_output_path, tile_level, store_history):
+    def create_base_tiles(self, player_map_path, tile_output_path, tile_level, store_history):
         """
         Read all .map files and create a leaflet tile folder
-        @param player_map_path array of folder name where are stored map ex:C:\Users\UserName\Documents\7 Days To Die\Saves\
-        Random Gen\lll\Player\76561197968197169.map
+        @param player_map_path array of folder name where are stored map
+            ex:
+        C:\Users\K\AppData\Roaming\7DaysToDie\Saves\Random Gen\[00FF00]Ketchu Free Party 12\Player\76561197968197169.map
+
         @param tile_level number of tiles to extract around position 0,0 of map. It is in the form of 4^n tiles.It will
         extract a grid of 2**n tiles on each side. n=8 will give you an extraction of -128 +128 in X and Y tiles index.
         """
@@ -279,11 +271,11 @@ class Advanced_MapReader(threading.Thread):
         z_path = os.path.join(tile_output_path, str(tile_level))
         if not os.path.exists(z_path):
             os.mkdir(z_path)
-        #compute min-max X Y
+        # compute min-max X Y
         big_tile_range = 2**tile_level
         tile_range = big_tile_range*16
         # iterate on x
-        minmax_tile = [(tile_range, tile_range),(-tile_range, -tile_range)]
+        minmax_tile = [(tile_range, tile_range), (-tile_range, -tile_range)]
         used_tiles = 0
         for x in range(2**tile_level):
             if time.time() - lastprint > 1:
@@ -298,7 +290,7 @@ class Advanced_MapReader(threading.Thread):
                 for tx, ty in itertools.product(range(16), range(16)):
                     world_txy = (x * 16 + tx - tile_range / 2, y * 16 + ty - tile_range / 2)
                     tile_data = reader.fetch_tile(self.index_from_xy(world_txy[0], world_txy[1]))
-                    if not tile_data is None:
+                    if tile_data is not None:
                         used_tiles += 1
                         minmax_tile = [(min(minmax_tile[0][0], world_txy[0]), min(minmax_tile[0][1], world_txy[1])),
                                        (max(minmax_tile[1][0], world_txy[0]), max(minmax_tile[1][1], world_txy[1]))]
@@ -313,10 +305,10 @@ class Advanced_MapReader(threading.Thread):
                             big_tile.paste(tile_im, (tx * 16, ty * 16))
                         except ValueError:
                             print "The following file is corrupted, skip it:\n" +\
-                                  reader.tiles_file_path.get(index_from_xy(world_txy[0], world_txy[1]))
+                                  reader.tiles_file_path.get(self.index_from_xy(world_txy[0], world_txy[1]))
                 # All 16pix tiles of this big tile has been copied into big tile
                 # Time to save big tile
-                if not big_tile is None:
+                if big_tile is not None:
                     # Create Dirs if not exists
                     if not x_dir_make:
                         if not os.path.exists(x_path):
@@ -329,7 +321,7 @@ class Advanced_MapReader(threading.Thread):
               "miny:", minmax_tile[0][1], " maxy: ", minmax_tile[1][1]
         print "Tiles used / total read", used_tiles, " / ", reader.new_tiles
 
-    def create_low_zoom_tiles(self,tile_output_path, tile_level_native):
+    def create_low_zoom_tiles(self, tile_output_path, tile_level_native):
         """
             Merge 4 tiles of 256x256 into a big 512x512 tile then resize to 256x256
         """
@@ -347,16 +339,16 @@ class Advanced_MapReader(threading.Thread):
                     tiles_to_process.add((x_path, y_path))
             while len(tiles_to_process) > 0:
                 if time.time() - lastprint > 1:
-                    print "Zoom level ",tile_level - 1, ", ", len(tiles_to_process), " tiles left"
+                    print "Zoom level ", tile_level - 1, ", ", len(tiles_to_process), " tiles left"
                     lastprint = time.time()
                 tile_to_process = next(iter(tiles_to_process))
                 # compute id of origin tile
                 orig_tile = (tile_to_process[0] - tile_to_process[0] % 2, tile_to_process[1] - tile_to_process[1] % 2)
                 # compute the index of the 4 tiles
-                tiles = [orig_tile, #bottom left
-                         (orig_tile[0] + 1, orig_tile[1]), #bottom right
-                         (orig_tile[0], orig_tile[1] + 1), #top left
-                         (orig_tile[0] + 1, orig_tile[1] + 1)] #top right
+                tiles = [orig_tile,  # bottom left
+                         (orig_tile[0] + 1, orig_tile[1]),  # bottom right
+                         (orig_tile[0], orig_tile[1] + 1),  # top left
+                         (orig_tile[0] + 1, orig_tile[1] + 1)]  # top right
                 tiles_paste_pos = [(0, 0), (256, 0), (0, 256), (256, 256)]
                 # Remove tiles from processing
                 missing_tiles = set()
@@ -383,33 +375,36 @@ class Advanced_MapReader(threading.Thread):
                 lower_zoom_image.save(os.path.join(x_lower_path, str(((orig_tile[1] + (2 ** tile_level) / 2) / 2)
                                                                      - (2 ** (tile_level - 1)) / 2) + ".png"))
 
-    def read_folder(self,path):
+    def read_folder(self, path):
         self.map_files = [os.path.join(path, self.file_name) for self.file_name in os.listdir(path) if self.file_name.endswith(".map")]
         self.map_files.sort(key=lambda file_path: -os.stat(file_path).st_mtime)
         return self.map_files
 
-    def copyMapFile(self,path,value):
-        mapPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Map')
-        if not os.path.isdir(mapPath):
-            os.mkdir(mapPath)
-        shutil.copy(os.path.join(path,value),os.path.join(mapPath,value) )
+    def copy_map_file(self, path, value):
+        print path
+        print value
+        map_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Map')
+        if not os.path.isdir(map_path):
+            os.mkdir(map_path)
+        shutil.copy(os.path.join(path, value), os.path.join(map_path, value))
         """    def copyMapFiles(self,path,value):
         shutil.copytree(os.path.join(path,value),os.path.join("Map",value) )
         """
+
     def usage(self):
         print "This program extract and merge map tiles of all players.Then write it in a folder with verious zoom"
         print " levels. In order to hide player bases, this program keep only the oldest version of each tile by default."
-        print    " By providing the Server telnet address and password this software run in background and is able to do the"
-        print    " following features:\n" 
-        print    " - Update tiles when a player disconnect\n" 
-        print    " - Add Poi when a whitelisted user say /addpoi title\n" 
-        print    " - Update players csv coordinates file\n"
+        print " By providing the Server telnet address and password this software run in background and is able to do the"
+        print " following features:\n"
+        print " - Update tiles when a player disconnect\n"
+        print " - Add Poi when a whitelisted user say /addpoi title\n"
+        print " - Update players csv coordinates file\n"
         print "Usage:"
         print "map_reader -g XX [options]"
         print " -g \"C:\\Users..\":\t The folder that contain .map files"
         print " -t \"tiles\":\t\t The folder that will contain tiles (Optional)"
         print " -z 8:\t\t\t\t Zoom level 4-n. Number of tiles to extract around position 0,0 of map." 
-        print      " It is in the form of 4^n tiles.It will extract a grid of 2^n*16 tiles on each side.(Optional)"
+        print " It is in the form of 4^n tiles.It will extract a grid of 2^n*16 tiles on each side.(Optional)"
         print " -s telnethost:port \t7DTD server ip and port (telnet port, default 8081) (Optional)"
         print " -p CHANGEME Password of telnet, default is CHANGEME (Optional)"
         print " -i True \t Do not read /addpoi command of players"
@@ -423,10 +418,9 @@ class Advanced_MapReader(threading.Thread):
         print " -b gui:\t\t Use Gui version (Optional)"
         print " -f FTPHost:UserName:PassWord \t FTP server connection infos (Optional)"
 
-
     def run(self):
         pass
         
-th1 = Advanced_MapReader()
+th1 = AdvancedMapReader()
 th1.start()
 th1.join()
