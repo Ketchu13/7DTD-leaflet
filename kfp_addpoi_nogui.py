@@ -125,20 +125,24 @@ class KFP_AddPOI(threading.Thread):
         @staticmethod
         def writepoi(poilist_path, pseudo_request, sid, poiname, poi_location):
             try:
-                with open(poilist_path, "r+") as f:
+                print "poilist_path: " + poilist_path + "\n"
+                with open(poilist_path, "r") as f:
                     poilist_src = ''.join(f.readlines()[:-1])[:-1]
+                    print "poilist_src: " + poilist_src + "\n"
                     if len(poilist_src) <= 0:
+                        print "poilist_src2: " + poilist_src
                         poilist_src = '<poilist>\n'
-                        f.write(poilist_src + '\n' +
-                                '<poi sname=\"' + pseudo_request +
-                                '\" steamId=\"' + sid +
-                                '\" pname=\"' + poiname +
-                                '\" pos=\"' + poi_location +
-                                '\" icon=\"farm\" />\n' +
-                                '</poilist>')
-                    return True
+                with open(poilist_path, "r+") as f:
+                    f.write(poilist_src + '\n' +
+                    '<poi sname=\"' + pseudo_request +
+                    '\" steamId=\"' + sid +
+                    '\" pname=\"' + poiname +
+                    '\" pos=\"' + poi_location +
+                    '\" icon=\"farm\" />\n' +
+                    '</poilist>')
+                return True
             except IOError as e:
-                print ("Error in writepoi: ", e)
+                print ("\n\nError in writepoi: ", e)
                 return False
 
         def addpoi(self, poilist_path, pseudo_request, sid, poiname, poi_location):
