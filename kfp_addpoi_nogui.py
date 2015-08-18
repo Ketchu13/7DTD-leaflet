@@ -239,16 +239,18 @@ class KFP_AddPOI(threading.Thread):
                                         adp = False
                                         t = ET.parse(whitelist_path)
                                         r = t.getroot()
+                                        allow = False
                                         for u in r.findall('user'):
                                             if u.get('steamId') == sid and \
                                                             u.get('rank') >= '1' and \
                                                             u.get('allowed') == '1':
                                                 self.addpoi(poi_path, pseudo_request, sid, poiname, str(poiloc_x) + ", "
                                                             + str(poiloc_y))
-                                            else:
-                                                self.sock.sendall('say \"[FF0000]' +
-                                                                  pseudo_poi +
-                                                                  ', your are not allowed to add a poi.\"')
+                                                allow = True
+                                        if not allow:
+                                            self.sock.sendall('say \"[FF0000]' +
+                                                              pseudo_poi +
+                                                              ', your are not allowed to add a poi.\"')
             print u"Client arrêté. connexion interrompue."
             self.sock.close()
 
