@@ -283,18 +283,24 @@ class KFP_AddPOIGui(threading.Thread):
             gFile.close()
         def deco(self):
             return self.connection.quit()
+
         def envoi(self,adresse_fichier):
-            file = open(adresse_fichier, 'rb')
-            self.connection.storbinary('STOR ' + adresse_fichier, file)
-            file.close()
+            _file = open(adresse_fichier, 'rb')
+            self.connection.storbinary('STOR ' + adresse_fichier, _file)
+            _file.close()
+
         def rename(self,avant, apres):
             return self.connection.rename(avant, apres)
+
         def efface(self,fichier):
             return self.connection.delete(fichier)
+
         def creer_rep(self,nom):
-            return self.connection.mkd(nom)     
+            return self.connection.mkd(nom)
+
         def sup_rep(self,nom):
-            return self.connection.rmd(nom)    
+            return self.connection.rmd(nom)
+
         def run(self):
             pass
  
@@ -367,7 +373,7 @@ class KFP_AddPOIGui(threading.Thread):
                          self.GUI.updateHTTP("Launching HTTP server on " + self.host + ":" + str(self.port))
                          self.socket.bind((self.host, self.port))
                          ub = True
-                     except Exception as e:
+                     except Exception:
                          self.GUI.updateHTTP("ERROR: Failed to acquire sockets for ports " + str(self.port))
              self.GUI.updateHTTP("Server successfully acquired the socket with port: " + str(self.port))
              self.GUI.updateHTTP("Press Ctrl+C to shut down the server and exit.")
@@ -435,11 +441,6 @@ class KFP_AddPOIGui(threading.Thread):
                      conn.close()
                  else:
                      self.GUI.updateHTTP("Unknown HTTP request method: " + request_method)
-
-        def graceful_shutdown(sig, dummy):
-            s.shutdown()  # shut down the server
-            import sys
-            sys.exit(1)
 
         def keerunning(self, value):
             self.keep_running = bool(value)
