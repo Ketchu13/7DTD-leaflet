@@ -1,0 +1,1 @@
+map_reader.py -s 81.65.206.12:13810 -p 36disney14 -c "." -g "C:\Users\K\AppData\Roaming\7DaysToDie\Saves\Random Gen\[00FF00]Ketchu Free Party 12\Player" -k "./xml/POIList.xml" -h 8089 -w "./xml/POIWhiteList.xml" -v True
