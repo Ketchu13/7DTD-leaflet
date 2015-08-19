@@ -23,22 +23,16 @@
 # @author Nicolas Fortin github@nettrader.fr https://github.com/nicolas-f
 # @author Nicolas Grimaud ketchu13@hotmail.com https://github.com/ketchu13
 
-import getopt
 import os
 import re
-import signal
 import socket
-import sys
 from threading import Timer
-from threading import Thread
 import threading
-import time
 
 import xml.etree.ElementTree as ET
 
 
 class KFP_AddPOI(threading.Thread):
-
     @staticmethod
     def usage():
         print "This program extract and merge map tiles of all players.Then write it in a folder with various zoom"
@@ -52,7 +46,7 @@ class KFP_AddPOI(threading.Thread):
         print "map_reader -g XX [options]"
         print " -g \"C:\\Users..\":\t The folder that contain .map files"
         print " -t \"tiles\":\t\t The folder that will contain tiles (Optional)"
-        print " -z 8:\t\t\t\t Zoom level 4-n. Number of tiles to extract around position 0,0 of map." 
+        print " -z 8:\t\t\t\t Zoom level 4-n. Number of tiles to extract around position 0,0 of map."
         print " It is in the form of 4^n tiles.It will extract a grid of 2^n*16 tiles on each side.(Optional)"
         print " -s telnethost:port \t7DTD server ip and port (telnet port, default 8081) (Optional)"
         print " -p CHANGEME Password of telnet, default is CHANGEME (Optional)"
@@ -72,15 +66,17 @@ class KFP_AddPOI(threading.Thread):
         self.settings = self.parent.settings
 
         if self.settings['wLPath'] is None:  # Show gui to select poi whitelist folder
-            self.settings['wLPath'] = self.select_file({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
-                                                        "title": "Choose the Whiteliste that contain autorised users infos."})
+            self.settings['wLPath'] = self.select_file(
+                {"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
+                 "title": "Choose the Whiteliste that contain autorised users infos."})
         if len(self.settings['wLPath']) == 0:
             print "You must define the leaflet users whitelist."
             exit(-1)
 
         if self.settings['poiPath'] is None:  # Show gui to select poi list.xml path
-            self.settings['poiPath'] = self.select_file({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
-                                                         "title": "Choose the POIList.xml path."})
+            self.settings['poiPath'] = self.select_file(
+                {"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
+                 "title": "Choose the POIList.xml path."})
 
         if len(self.settings['poiPath']) == 0:
             print "You must define the leaflet poi list."
@@ -183,7 +179,7 @@ class KFP_AddPOI(threading.Thread):
                 s2 = s1.split(b'\r')
 
                 if 'Please enter password:' in data_received:  # connected with 7dtd server
-                    self.sock.sendall(server_pass+'\n')
+                    self.sock.sendall(server_pass + '\n')
                 else:
                     for str_line in s2:
                         #  print "str_line: " + str_line
@@ -193,7 +189,8 @@ class KFP_AddPOI(threading.Thread):
                             if verbose:
                                 print str_line
                             if nn in str_line:  # check new player connection
-                                steamid = str_line[str_line.find(nn2)+len(nn2):str_line.find('\', OwnerID=\'')]  # get steamid
+                                steamid = str_line[
+                                          str_line.find(nn2) + len(nn2):str_line.find('\', OwnerID=\'')]  # get steamid
                                 mp = self.parent.GenUserMap(self.parent, steamid)  # gen this user tiles map
                                 mp.start()
                             elif 'Logon successful.' in str_line and not loged:  # password ok
@@ -217,7 +214,7 @@ class KFP_AddPOI(threading.Thread):
                                     adp = True
                                     self.sock.sendall('lp\n')
                                     pseudo_poi = pseudo_temp[:pseudo_temp.find(': ')]
-                                    poiname = str_line[str_line.find(addpoi_cmd) + len(addpoi_cmd)+1:]
+                                    poiname = str_line[str_line.find(addpoi_cmd) + len(addpoi_cmd) + 1:]
                                     if re.search(r'^[A-Za-z0-9Ü-ü_ \-]{3,25}$', poiname):
                                         pseudo_request = pseudo_poi
                                     else:
@@ -246,20 +243,20 @@ class KFP_AddPOI(threading.Thread):
                                     except Exception as e:
                                         print e
                                 if adp and pseudo_request == pseudo and pseudo_request is not None:
-                                        adp = False
-                                        t = ET.parse(whitelist_path)
-                                        r = t.getroot()
-                                        allow = False
-                                        for u in r.findall('user'):
-                                            if u.get('steamId') == sid and u.get('rank') >= '1' and u.get('allowed') == '1':
-                                                self.addpoi(poi_path, pseudo_request, sid, poiname, str(poiloc_x) + ", "
-                                                            + str(poiloc_y))
-                                                allow = True
-                                                break
-                                        if not allow:
-                                            self.sock.sendall('say \"[FF0000]' +
-                                                              pseudo_poi +
-                                                              ', sorry, your are not allowed to add a poi.\"')
+                                    adp = False
+                                    t = ET.parse(whitelist_path)
+                                    r = t.getroot()
+                                    allow = False
+                                    for u in r.findall('user'):
+                                        if u.get('steamId') == sid and u.get('rank') >= '1' and u.get('allowed') == '1':
+                                            self.addpoi(poi_path, pseudo_request, sid, poiname, str(poiloc_x) + ", "
+                                                        + str(poiloc_y))
+                                            allow = True
+                                            break
+                                    if not allow:
+                                        self.sock.sendall('say \"[FF0000]' +
+                                                          pseudo_poi +
+                                                          ', sorry, your are not allowed to add a poi.\"')
             print u"Client arrêté. connexion interrompue."
             self.sock.close()
 
