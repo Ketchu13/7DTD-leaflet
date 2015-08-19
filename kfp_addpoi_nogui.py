@@ -72,7 +72,7 @@ class KFP_AddPOI(threading.Thread):
         if self.settings['wLPath'] is None:  # Show gui to select poi whitelist folder
             self.settings['wLPath'] = self.select_file({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
                                                "title": "Choose the Whiteliste that contain autorised users infos."})
-
+	
         if len(self.settings['wLPath']) == 0:
             print "You must define the leaflet users whitelist."
             exit(-1)
@@ -88,6 +88,7 @@ class KFP_AddPOI(threading.Thread):
         self.parent = parent
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((self.settings['sIp'] , int(self.settings['sPort'])))
+        #  print "connection"
         self.thread_reception = self.ThreadReception(self.sock, self)
         self.thread_reception.start()
 
@@ -108,23 +109,23 @@ class KFP_AddPOI(threading.Thread):
             self.sock = sock
             self.parent = parent
             self.exiter = False
-
+	    #  print "receive thread"
+	    
         def exite(self):
             if not self.exiter:
                 self.exiter = True
 
         def refresh_players_list(self):
             try:
-                print "\n\tSend lp\n\n"
+                print "\n\tSend lp\n"
                 self.sock.sendall('lp\n')
-                t = Timer(20.0, self.refresh_players_list)
+                t = Timer(5.0, self.refresh_players_list)
                 t.start()
             except Exception as e:
                 print "Error: " + str(e)
 
         @staticmethod
         def writepoi(poilist_path, pseudo_request, sid, poiname, poi_location):
-            print "\n\n\n" + poiname
             try:
                 with open(poilist_path, "r") as f:
                     poilist_src = ''.join(f.readlines()[:-1])[:-1]
@@ -155,7 +156,7 @@ class KFP_AddPOI(threading.Thread):
                 print ("Error in addpoi: ", e)
 
         def run(self):
-            print "run"
+            #  print "run"
             whitelist_path = str(self.parent.parent.settings['wLPath'])
             verbose = bool(self.parent.parent.settings['verbose'])
             server_pass = self.parent.parent.settings['sPass']
@@ -179,7 +180,7 @@ class KFP_AddPOI(threading.Thread):
                     self.sock.sendall(server_pass+'\n')
                 else:
                     for str_line in s2:
-                        print "str_line: " + str_line
+                        #  print "str_line: " + str_line
                         if len(str_line) >= 5:
                             nn = 'Player disconnected: EntityID='
                             nn2 = ', PlayerID=\''
