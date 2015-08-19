@@ -60,6 +60,7 @@ class AdvancedMapReader(threading.Thread):
         # parse command line options
         try:
             for opt, value in getopt.getopt(sys.argv[1:], "g:t:z:n:s:h:p:i:x:w:k:v:c:b:f:")[0]:
+                print value 
                 if opt == "-g":
                     self.settings['game_player_path'] = value
                 elif opt == "-t":
@@ -93,8 +94,9 @@ class AdvancedMapReader(threading.Thread):
                     self.settings['GUI'] = value
                 elif opt == "-f":
                     self.settings['FTPInfos'] = value
+            
         except getopt.error, msg:
-            print str(msg)
+            print "Error: " + str(msg)
             self.usage()
             raw_input()
             exit(-1)
@@ -128,9 +130,11 @@ class AdvancedMapReader(threading.Thread):
             print self.settings['GUI']
             if self.settings['GUI'] == "gui":
                 th_addpoi = KFP_AddPOIGui(self)
+                print "start kpfAddpoigui thread"
                 th_addpoi.start()
             else: 
                 th_addpoi = KFP_AddPOI(self)
+                print "start kpfAddpoi thread"
                 th_addpoi.start()
             exit(-1)
 
