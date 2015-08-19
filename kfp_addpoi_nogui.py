@@ -155,6 +155,7 @@ class KFP_AddPOI(threading.Thread):
                 print ("Error in addpoi: ", e)
 
         def run(self):
+            print "run"
             whitelist_path = str(self.parent.parent.settings['wLPath'])
             verbose = bool(self.parent.parent.settings['verbose'])
             server_pass = self.parent.parent.settings['sPass']
@@ -178,6 +179,7 @@ class KFP_AddPOI(threading.Thread):
                     self.sock.sendall(server_pass+'\n')
                 else:
                     for str_line in s2:
+                        print "str_line: " + str_line
                         if len(str_line) >= 5:
                             nn = 'Player disconnected: EntityID='
                             nn2 = ', PlayerID=\''
