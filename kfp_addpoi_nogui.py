@@ -39,8 +39,9 @@ import xml.etree.ElementTree as ET
 
 class KFP_AddPOI(threading.Thread):
 
-    def usage(self):
-        print "This program extract and merge map tiles of all players.Then write it in a folder with verious zoom"
+    @staticmethod
+    def usage():
+        print "This program extract and merge map tiles of all players.Then write it in a folder with various zoom"
         print " levels. In order to hide player bases, this program keep only the oldest version of each tile by default."
         print " By providing the Server telnet address and password this software run in background and is able to do the"
         print " following features:\n"
@@ -72,15 +73,14 @@ class KFP_AddPOI(threading.Thread):
 
         if self.settings['wLPath'] is None:  # Show gui to select poi whitelist folder
             self.settings['wLPath'] = self.select_file({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
-                                               "title": "Choose the Whiteliste that contain autorised users infos."})
-	
+                                                        "title": "Choose the Whiteliste that contain autorised users infos."})
         if len(self.settings['wLPath']) == 0:
             print "You must define the leaflet users whitelist."
             exit(-1)
 
         if self.settings['poiPath'] is None:  # Show gui to select poi list.xml path
             self.settings['poiPath'] = self.select_file({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
-                        "title": "Choose the POIList.xml path."})
+                                                         "title": "Choose the POIList.xml path."})
 
         if len(self.settings['poiPath']) == 0:
             print "You must define the leaflet poi list."
@@ -88,12 +88,12 @@ class KFP_AddPOI(threading.Thread):
 
         self.parent = parent
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.settings['sIp'] , int(self.settings['sPort'])))
+        self.sock.connect((self.settings['sIp'], int(self.settings['sPort'])))
         print 'Connection..Please wait..'
         self.thread_reception = self.ThreadReception(self.sock, self)
         self.thread_reception.start()
 
-    def select_file(self,opts):
+    def select_file(self, opts):
         try:
             import tkFileDialog
             from Tkinter import Tk
@@ -111,11 +111,12 @@ class KFP_AddPOI(threading.Thread):
             self.sock = sock
             self.parent = parent
             self.exiter = False
-            print('ThreadReception __inited__...')#  print "receive thread"
+            print('ThreadReception __inited__...')  # print "receive thread"
 
         def exite(self):
             if not self.exiter:
                 self.exiter = True
+                print('ThreadReception exit...')
 
         def refresh_players_list(self):
             try:
@@ -124,7 +125,7 @@ class KFP_AddPOI(threading.Thread):
                 t = Timer(5.0, self.refresh_players_list)  # !! 5 Secondes !!
                 t.start()
             except Exception as e:
-                print "Error: " + str(e)
+                print "Error in refresh_player: " + str(e)
 
         @staticmethod
         def writepoi(poilist_path, pseudo_request, sid, poiname, poi_location):
@@ -136,12 +137,13 @@ class KFP_AddPOI(threading.Thread):
                         print("\tPOIList.xml successfully loaded..")
                 with open(poilist_path, "r+") as f:
                     f.write(poilist_src + '\n' +
-                    '<poi sname=\"' + pseudo_request +
-                    '\" steamId=\"' + sid +
-                    '\" pname=\"' + poiname +
-                    '\" pos=\"' + poi_location +
-                    '\" icon=\"farm\" />\n' +
-                    '</poilist>')
+                            '<poi sname=\"' + pseudo_request +
+                            '\" steamId=\"' + sid +
+                            '\" pname=\"' + poiname +
+                            '\" pos=\"' + poi_location +
+                            '\" icon=\"farm\" />\n' +
+                            '</poilist>')
+                    print("\tPoi added and POIList.xml successfully saved..")
                 return True
             except IOError as e:
                 print ("Error in writepoi: ", e)
@@ -159,7 +161,7 @@ class KFP_AddPOI(threading.Thread):
                 print ("\tError in addpoi: ", e)
 
         def run(self):
-            #  print "run"
+            print 'Addpoi_no_gui run()..'
             whitelist_path = str(self.parent.parent.settings['wLPath'])
             verbose = bool(self.parent.parent.settings['verbose'])
             server_pass = self.parent.parent.settings['sPass']
@@ -188,17 +190,18 @@ class KFP_AddPOI(threading.Thread):
                         if len(str_line) >= 5:
                             nn = 'Player disconnected: EntityID='
                             nn2 = ', PlayerID=\''
+                            if verbose:
+                                print str_line
                             if nn in str_line:  # check new player connection
                                 steamid = str_line[str_line.find(nn2)+len(nn2):str_line.find('\', OwnerID=\'')]  # get steamid
-                                mp = self.parent.GenUserMap(self.parent,steamid)  # gen this user tiles map
+                                mp = self.parent.GenUserMap(self.parent, steamid)  # gen this user tiles map
                                 mp.start()
-                            if 'Logon successful.' in data_received and not loged:  # password ok
+                            elif 'Logon successful.' in str_line and not loged:  # password ok
                                 loged = True
                                 self.sock.sendall('lp\n')  # request player list
                                 self.refresh_players_list()  # add a timer fo refresh player list every X s
-                            elif verbose:
-                                print str_line
-                            if 'GMSG:' in str_line:  # receive a chat msg
+
+                            elif 'GMSG:' in str_line:  # receive a chat msg
                                 pseudo_temp = str_line[str_line.find('GMSG:') + 6:]
                                 msg_list = [' joined the game', ' left the game', ' killed player']
                                 skip = False
@@ -248,9 +251,7 @@ class KFP_AddPOI(threading.Thread):
                                         r = t.getroot()
                                         allow = False
                                         for u in r.findall('user'):
-                                            if u.get('steamId') == sid and \
-                                                            u.get('rank') >= '1' and \
-                                                            u.get('allowed') == '1':
+                                            if u.get('steamId') == sid and u.get('rank') >= '1' and u.get('allowed') == '1':
                                                 self.addpoi(poi_path, pseudo_request, sid, poiname, str(poiloc_x) + ", "
                                                             + str(poiloc_y))
                                                 allow = True
