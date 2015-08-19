@@ -129,12 +129,12 @@ class AdvancedMapReader(threading.Thread):
         else:
             print self.settings['GUI']
             if self.settings['GUI'] == "gui":
-                th_addpoi = KFP_AddPOIGui(self)
                 print "start kpfAddpoigui thread"
+                th_addpoi = KFP_AddPOIGui(self)
                 th_addpoi.start()
-            else: 
-                th_addpoi = KFP_AddPOI(self)
+            else:
                 print "start kpfAddpoi thread"
+                th_addpoi = KFP_AddPOI(self)
                 th_addpoi.start()
             exit(-1)
 

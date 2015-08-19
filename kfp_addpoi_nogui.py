@@ -16,8 +16,8 @@
 # along with 7dtd-leaflet. If not, see <http://www.gnu.org/licenses/>.
 #
 # Source code hosted at:
-#    7dtd-leaflet:              https://github.com/nicolas-f/7DTD-leaflet
-#    7dtd-leaflet+POI:          https://github.com/Ketchu13/7DTD-leaflet
+#    7dtd-leaflet:            https://github.com/nicolas-f/7DTD-leaflet
+#    7dtd-leaflet+POI:        https://github.com/Ketchu13/7DTD-leaflet
 #
 #
 # @author Nicolas Fortin github@nettrader.fr https://github.com/nicolas-f
@@ -26,6 +26,7 @@
 import getopt
 import os
 import re
+import signal
 import socket
 import sys
 from threading import Timer
@@ -37,9 +38,9 @@ import xml.etree.ElementTree as ET
 
 
 class KFP_AddPOI(threading.Thread):
-    @staticmethod
-    def usage():
-        print "This program extract and merge map tiles of all players.Then write it in a folder with various zoom"
+
+    def usage(self):
+        print "This program extract and merge map tiles of all players.Then write it in a folder with verious zoom"
         print " levels. In order to hide player bases, this program keep only the oldest version of each tile by default."
         print " By providing the Server telnet address and password this software run in background and is able to do the"
         print " following features:\n"
@@ -71,35 +72,36 @@ class KFP_AddPOI(threading.Thread):
 
         if self.settings['wLPath'] is None:  # Show gui to select poi whitelist folder
             self.settings['wLPath'] = self.select_file({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
-                                                        "title": "Choose the Whiteliste that contain autorised users infos."})
+                                               "title": "Choose the Whiteliste that contain autorised users infos."})
+	
         if len(self.settings['wLPath']) == 0:
-            print 'You must define the leaflet users whitelist.'
+            print "You must define the leaflet users whitelist."
             exit(-1)
 
         if self.settings['poiPath'] is None:  # Show gui to select poi list.xml path
             self.settings['poiPath'] = self.select_file({"initialdir": os.path.expanduser("~\\Documents\\7 Days To Die\\Saves\\Random Gen\\"),
-                                                         "title": "Choose the POIList.xml path."})
+                        "title": "Choose the POIList.xml path."})
 
         if len(self.settings['poiPath']) == 0:
-            print 'You must define the leaflet poi list.'
+            print "You must define the leaflet poi list."
             exit(-1)
 
         self.parent = parent
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.settings['sIp'], int(self.settings['sPort'])))
+        self.sock.connect((self.settings['sIp'] , int(self.settings['sPort'])))
         print 'Connection..Please wait..'
         self.thread_reception = self.ThreadReception(self.sock, self)
         self.thread_reception.start()
 
-    def select_file(self, opts):
+    def select_file(self,opts):
         try:
             import tkFileDialog
             from Tkinter import Tk
             root = Tk()
             root.withdraw()
             return tkFileDialog.askopenfilename(**opts)
-        except ImportError as e:
-            print 'Error in select_file: ' + str(e)
+        except ImportError:
+            print ('Error in select_file')
             self.usage()
             exit(-1)
 
@@ -109,42 +111,40 @@ class KFP_AddPOI(threading.Thread):
             self.sock = sock
             self.parent = parent
             self.exiter = False
-            self.verbose = bool(self.parent.parent.settings['verbose'])
-            self.print_debug('ThreadReception __inited__...')
+            print('ThreadReception __inited__...')#  print "receive thread"
 
         def exite(self):
             if not self.exiter:
                 self.exiter = True
-                self.print_debug('ThreadReception exit...')
 
         def refresh_players_list(self):
             try:
-                self.print_debug('ThreadReception send lp every 5s\n')
+                print('ThreadReception send lp every 5s\n')
                 self.sock.sendall('lp\n')
                 t = Timer(5.0, self.refresh_players_list)  # !! 5 Secondes !!
                 t.start()
             except Exception as e:
-                print "Error in refresh_player: " + str(e)
+                print "Error: " + str(e)
 
-        def writepoi(self, poilist_path, pseudo_request, sid, poiname, poi_location):
+        @staticmethod
+        def writepoi(poilist_path, pseudo_request, sid, poiname, poi_location):
             try:
                 with open(poilist_path, "r") as f:
                     poilist_src = ''.join(f.readlines()[:-1])[:-1]
                     if len(poilist_src) <= 0:
                         poilist_src = '<poilist>\n'
-                    self.print_debug("\tPOIList.xml successfully loaded..")
+                        print("\tPOIList.xml successfully loaded..")
                 with open(poilist_path, "r+") as f:
                     f.write(poilist_src + '\n' +
-                            '<poi sname=\"' + pseudo_request +
-                            '\" steamId=\"' + sid +
-                            '\" pname=\"' + poiname +
-                            '\" pos=\"' + poi_location +
-                            '\" icon=\"farm\" />\n' +
-                            '</poilist>')
-                    self.print_debug("\tPoi added and POIList.xml successfully saved..")
+                    '<poi sname=\"' + pseudo_request +
+                    '\" steamId=\"' + sid +
+                    '\" pname=\"' + poiname +
+                    '\" pos=\"' + poi_location +
+                    '\" icon=\"farm\" />\n' +
+                    '</poilist>')
                 return True
             except IOError as e:
-                print ('Error in writepoi: ', e)
+                print ("Error in writepoi: ", e)
                 return False
 
         def addpoi(self, poilist_path, pseudo_request, sid, poiname, poi_location):
@@ -158,13 +158,10 @@ class KFP_AddPOI(threading.Thread):
             except IOError as e:
                 print ("\tError in addpoi: ", e)
 
-        def print_debug(self, value):
-            if self.verbose:
-                print '\t' + value
-
         def run(self):
-            self.print_debug('Run addpoi_no_gui..')
+            #  print "run"
             whitelist_path = str(self.parent.parent.settings['wLPath'])
+            verbose = bool(self.parent.parent.settings['verbose'])
             server_pass = self.parent.parent.settings['sPass']
             poi_path = self.parent.parent.settings['poiPath']
             adp = False
@@ -173,7 +170,7 @@ class KFP_AddPOI(threading.Thread):
             loged = False
             pseudo_request = None
 
-            self.print_debug("ThreadReception receive loop started..")
+            print("ThreadReception receive loop started..")
             while not self.exiter:
                 """str_line = None
                 s1 = None
@@ -183,113 +180,98 @@ class KFP_AddPOI(threading.Thread):
                 s1 = data_received.replace(b'\n', b'')
                 s2 = s1.split(b'\r')
 
-                for str_line in s2:
-                    if len(str_line) >= 5:
-                        nn = 'Player disconnected: EntityID='
-                        nn2 = ', PlayerID=\''
-                        if self.verbose:
-                            print str_line
-                        if 'Please enter password:' in str_line:  # connected with 7dtd server
-                            self.print_debug('Sending password..')
-                            self.sock.sendall(server_pass+'\n')
-                            #  print "str_line: " + str_line
-                        elif 'Logon successful.' in data_received and not loged:  # password ok
-                            self.print_debug('Logon successful to the 7dtd server...')
-                            loged = True
-                            self.sock.sendall('lp\n')  # request player list
-                            self.print_debug('Launch the refresh_players_list timer...')
-                            self.refresh_players_list()  # add a timer fo refresh player list every X s
-                        elif nn in str_line:  # check new player connection
-                            self.print_debug('A player left the game..')
-                            steamid = str_line[str_line.find(nn2)+len(nn2):str_line.find('\', OwnerID=\'')]  # get steamid
-                            mp = self.parent.GenUserMap(self.parent, steamid)  # gen this user tiles map
-                            self.print_debug('launch map_reader for create this player map tiles..')
-                            mp.start()  # mp.join()
-                        elif 'GMSG:' in str_line:  # receive a chat msg
-                            self.print_debug('Parsing new chat line..')
-                            pseudo_temp = str_line[str_line.find('GMSG:') + 6:]
-                            msg_list = [' joined the game', ' left the game', ' killed player']
-                            skip = False
-                            for ik in range(0, len(msg_list)):  # parse server chat message
-                                if msg_list[ik] in str_line:
-                                    #  pseudo_event = pseudo_temp[:pseudo_temp.find(msg_list[ik])]
-                                    if ik == 1:
-                                        skip = True
-                            addpoi_cmd = '/addpoi'
-                            if skip:  # refresh players infos
-                                self.print_debug('A player kill another, join or left the game so refresh the players list..')
-                                self.sock.sendall('lp\n')
-                            elif addpoi_cmd in str_line:  # if /addpoi is found in received chat message
-                                self.print_debug('Addpoi is requested..')
-                                adp = True
-                                pseudo_poi = pseudo_temp[:pseudo_temp.find(': ')]
-                                poiname = str_line[str_line.find(addpoi_cmd) + len(addpoi_cmd)+1:]
-                                if re.search(r'^[A-Za-z0-9Ü-ü_ \-]{3,25}$', poiname):  # remove Ü-ü for en/us lang
-                                    self.print_debug('Good poi_Name..')
-                                    pseudo_request = pseudo_poi
-                                    self.sock.sendall('lp\n')  # Refresh players list
-                                else:
-                                    self.print_debug('Bad poi_Name..')
-                                    self.sock.sendAll('say \"[FF0000]' +
-                                                      pseudo_poi +
-                                                      ', The Poi Name must contain between 3 ' +
-                                                      'and 25 alphanumerics characters .\"')
-                        elif '. id=' in str_line:
-                            self.print_debug('Parse player infos..')
-                            i = str_line.find(', ')
-                            j = str_line.find(', pos=(')
-                            pseudo = str_line[i + 2:j]
-                            sid_temp = str_line.find('steamid=')
-                            sid = str_line[sid_temp + 8:str_line.find(',', sid_temp)]
-                            loc_temp = str_line[j + 7:]
-                            user_location = loc_temp[:loc_temp.find('), rot')]
-                            poiloc_y = int(float(user_location.split(', ')[0]))
-                            poiloc_x = int(float(user_location.split(', ')[2]))
-                            if self.parent.parent.settings['ignTrack']:  # check if players tracking is allowed
-                                self.print_debug('Adding player location to tracks.csv..')
-                                tracks = [(pseudo, poiloc_x, poiloc_y)]
-                                try:
-                                    import csv
-                                    tracks_path = os.path.join('.', 'players', 'tracks.csv')
-                                    with open(tracks_path, 'ab') as f:
-                                        w = csv.writer(f)
-                                        w.writerows(tracks)
-                                except Exception as e:
-                                    self.print_debug('Error when adding a new line in tracks.csv: ' + str(e))
-                            if adp and pseudo_request == pseudo and pseudo_request is not None:
-                                    adp = False
-                                    t = ET.parse(whitelist_path)
-                                    r = t.getroot()
-                                    allow = False
-                                    for u in r.findall('user'):
-                                        if u.get('steamId') == sid and u.get('rank') >= '1' and u.get('allowed') == '1':
-                                            self.print_debug('Player allowed, so add a poi..')
-                                            self.addpoi(poi_path, pseudo_request, sid, poiname, str(poiloc_x) + ", "
-                                                        + str(poiloc_y))
-                                            allow = True
-                                            break
-                                    if not allow:
-                                        self.print_debug('Player not allowed to add a poi..')
-                                        self.sock.sendall('say \"[FF0000]' +
+                if 'Please enter password:' in data_received:  # connected with 7dtd server
+                    self.sock.sendall(server_pass+'\n')
+                else:
+                    for str_line in s2:
+                        #  print "str_line: " + str_line
+                        if len(str_line) >= 5:
+                            nn = 'Player disconnected: EntityID='
+                            nn2 = ', PlayerID=\''
+                            if nn in str_line:  # check new player connection
+                                steamid = str_line[str_line.find(nn2)+len(nn2):str_line.find('\', OwnerID=\'')]  # get steamid
+                                mp = self.parent.GenUserMap(self.parent,steamid)  # gen this user tiles map
+                                mp.start()
+                            if 'Logon successful.' in data_received and not loged:  # password ok
+                                loged = True
+                                self.sock.sendall('lp\n')  # request player list
+                                self.refresh_players_list()  # add a timer fo refresh player list every X s
+                            elif verbose:
+                                print str_line
+                            if 'GMSG:' in str_line:  # receive a chat msg
+                                pseudo_temp = str_line[str_line.find('GMSG:') + 6:]
+                                msg_list = [' joined the game', ' left the game', ' killed player']
+                                skip = False
+                                for ik in range(0, len(msg_list)):  # parse server chat message
+                                    if msg_list[ik] in str_line:
+                                        #  pseudo_event = pseudo_temp[:pseudo_temp.find(msg_list[ik])]
+                                        if ik == 1:
+                                            skip = True
+                                addpoi_cmd = '/addpoi'
+                                if skip:  # refresh players infos
+                                    self.sock.sendall('lp\n')
+                                elif addpoi_cmd in str_line:
+                                    adp = True
+                                    self.sock.sendall('lp\n')
+                                    pseudo_poi = pseudo_temp[:pseudo_temp.find(': ')]
+                                    poiname = str_line[str_line.find(addpoi_cmd) + len(addpoi_cmd)+1:]
+                                    if re.search(r'^[A-Za-z0-9Ü-ü_ \-]{3,25}$', poiname):
+                                        pseudo_request = pseudo_poi
+                                    else:
+                                        self.sock.sendAll('say \"[FF0000]' +
                                                           pseudo_poi +
-                                                          ', sorry, your are not allowed to add a poi.\"')
-                print u"Client arrêté. Connexion interrompue."
-                self.sock.close()
+                                                          ', The Poi Name must contain between 3 ' +
+                                                          'and 25 alphanumerics characters .\"')
+                            elif '. id=' in str_line:
+                                i = str_line.find(', ')
+                                j = str_line.find(', pos=(')
+                                pseudo = str_line[i + 2:j]
+                                sid_temp = str_line.find('steamid=')
+                                sid = str_line[sid_temp + 8:str_line.find(',', sid_temp)]
+                                loc_temp = str_line[j + 7:]
+                                user_location = loc_temp[:loc_temp.find('), rot')]
+                                poiloc_y = int(float(user_location.split(', ')[0]))
+                                poiloc_x = int(float(user_location.split(', ')[2]))
+                                if self.parent.parent.settings['ignTrack']:
+                                    tracks = [(pseudo, poiloc_x, poiloc_y)]
+                                    try:
+                                        import csv
+                                        tracks_path = os.path.join('.', 'players', 'tracks.csv')
+                                        with open(tracks_path, 'ab') as f:
+                                            w = csv.writer(f)
+                                            w.writerows(tracks)
+                                    except Exception as e:
+                                        print e
+                                if adp and pseudo_request == pseudo and pseudo_request is not None:
+                                        adp = False
+                                        t = ET.parse(whitelist_path)
+                                        r = t.getroot()
+                                        allow = False
+                                        for u in r.findall('user'):
+                                            if u.get('steamId') == sid and \
+                                                            u.get('rank') >= '1' and \
+                                                            u.get('allowed') == '1':
+                                                self.addpoi(poi_path, pseudo_request, sid, poiname, str(poiloc_x) + ", "
+                                                            + str(poiloc_y))
+                                                allow = True
+                                                break
+                                        if not allow:
+                                            self.sock.sendall('say \"[FF0000]' +
+                                                              pseudo_poi +
+                                                              ', sorry, your are not allowed to add a poi.\"')
+            print u"Client arrêté. connexion interrompue."
+            self.sock.close()
 
     class GenUserMap(threading.Thread):
         def __init__(self, parent, value):
             threading.Thread.__init__(self)
             self.parent = parent
             self.value = value
-            self.parent.print_debug('Thread_GenUserMap __init__ ..')
 
         def run(self):
-            self.parent.print_debug('Copy the player Map in another folder name \"Map\"..')
             self.parent.parent.copy_map_file(self.parent.parent.settings['game_player_path'],
                                              self.value + ".map")
-            self.parent.print_debug('Reading the \"Map\" folder..')
             self.parent.parent.map_files = self.parent.parent.read_folder("Map")
-            self.parent.print_debug('Create tiles..')
             self.parent.parent.create_tiles(self.parent.parent.map_files,
                                             self.parent.parent.settings['tile_path'],
                                             self.parent.parent.settings['tile_zoom'],
