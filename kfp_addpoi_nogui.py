@@ -31,7 +31,6 @@ import threading
 
 import xml.etree.ElementTree as ET
 
-
 class KFP_AddPOI(threading.Thread):
     @staticmethod
     def usage():
@@ -59,6 +58,7 @@ class KFP_AddPOI(threading.Thread):
         print " -c \"www\":\t\t The folder that contain your index.html (Optional)"
         print " -newest Keep track of updates and write the last version of tiles. This will show players bases on map.(Optional)"
         print " -b gui:\t\t Use Gui version (Optional)"
+        print " -f FTPHost:UserName:PassWord \t FTP server connection infos (Optional)"
 
     def __init__(self, parent):
         threading.Thread.__init__(self)
@@ -82,7 +82,6 @@ class KFP_AddPOI(threading.Thread):
             print "You must define the leaflet poi list."
             exit(-1)
 
-        self.parent = parent
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((self.settings['sIp'], int(self.settings['sPort'])))
         print 'Connection..Please wait..'
@@ -182,7 +181,6 @@ class KFP_AddPOI(threading.Thread):
                     self.sock.sendall(server_pass + '\n')
                 else:
                     for str_line in s2:
-                        #  print "str_line: " + str_line
                         if len(str_line) >= 5:
                             nn = 'Player disconnected: EntityID='
                             nn2 = ', PlayerID=\''
