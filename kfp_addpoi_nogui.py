@@ -28,8 +28,8 @@ import re
 import socket
 from threading import Timer
 import threading
-
 import xml.etree.ElementTree as ET
+
 
 class KFP_AddPOI(threading.Thread):
     @staticmethod
@@ -117,10 +117,20 @@ class KFP_AddPOI(threading.Thread):
             try:
                 print('ThreadReception send lp every 5s\n')
                 self.sock.sendall('lp\n')
-                t = Timer(5.0, self.refresh_players_list)  # !! 5 Secondes !!
+                t = Timer(5.0, self.refresh_players_list)  # !! 5.0 Secondes !!
                 t.start()
             except Exception as e:
-                print "Error in refresh_player: " + str(e)
+                print "Error in refresh_players_list: " + str(e)
+
+        def refresh_threads_list(self):
+            try:
+                print '\tThread actif: ' + str(threading.active_count())
+                for th in threading.enumerate():
+                    print str(th)
+                t = Timer(20.0, self.refresh_threads_list)  # !! 20.0 Secondes !!
+                t.start()
+            except Exception as e:
+                print "Error in refresh_threads_list: " + str(e)
 
         @staticmethod
         def writepoi(poilist_path, pseudo_request, sid, poiname, poi_location):
@@ -166,17 +176,12 @@ class KFP_AddPOI(threading.Thread):
             poiname = None
             loged = False
             pseudo_request = None
-
             print("ThreadReception receive loop started..")
             while not self.exiter:
-                """str_line = None
-                s1 = None
-                s2 = None"""
                 data_received = self.sock.recv(4096)
                 data_received = data_received.decode(encoding='UTF-8', errors='ignore')
                 s1 = data_received.replace(b'\n', b'')
                 s2 = s1.split(b'\r')
-
                 if 'Please enter password:' in data_received:  # connected with 7dtd server
                     self.sock.sendall(server_pass + '\n')
                 else:
@@ -191,6 +196,7 @@ class KFP_AddPOI(threading.Thread):
                                           str_line.find(nn2) + len(nn2):str_line.find('\', OwnerID=\'')]  # get steamid
                                 mp = self.parent.GenUserMap(self.parent, steamid)  # gen this user tiles map
                                 mp.start()
+
                             elif 'Logon successful.' in str_line and not loged:  # password ok
                                 loged = True
                                 self.sock.sendall('lp\n')  # request player list
@@ -206,6 +212,7 @@ class KFP_AddPOI(threading.Thread):
                                         if ik == 1:
                                             skip = True
                                 addpoi_cmd = '/addpoi'
+
                                 if skip:  # refresh players infos
                                     self.sock.sendall('lp\n')
                                 elif addpoi_cmd in str_line:
@@ -213,6 +220,7 @@ class KFP_AddPOI(threading.Thread):
                                     self.sock.sendall('lp\n')
                                     pseudo_poi = pseudo_temp[:pseudo_temp.find(': ')]
                                     poiname = str_line[str_line.find(addpoi_cmd) + len(addpoi_cmd) + 1:]
+
                                     if re.search(r'^[A-Za-z0-9Ü-ü_ \-]{3,25}$', poiname):
                                         pseudo_request = pseudo_poi
                                     else:
@@ -220,6 +228,7 @@ class KFP_AddPOI(threading.Thread):
                                                           pseudo_poi +
                                                           ', The Poi Name must contain between 3 ' +
                                                           'and 25 alphanumerics characters .\"')
+
                             elif '. id=' in str_line:
                                 i = str_line.find(', ')
                                 j = str_line.find(', pos=(')
@@ -230,6 +239,7 @@ class KFP_AddPOI(threading.Thread):
                                 user_location = loc_temp[:loc_temp.find('), rot')]
                                 poiloc_y = int(float(user_location.split(', ')[0]))
                                 poiloc_x = int(float(user_location.split(', ')[2]))
+
                                 if self.parent.parent.settings['ignTrack']:
                                     print "\tTracks.csv updated..."
                                     tracks = [(pseudo, poiloc_x, poiloc_y)]
@@ -241,6 +251,7 @@ class KFP_AddPOI(threading.Thread):
                                             w.writerows(tracks)
                                     except Exception as e:
                                         print e
+
                                 if adp and pseudo_request == pseudo and pseudo_request is not None:
                                     adp = False
                                     t = ET.parse(whitelist_path)
@@ -256,6 +267,7 @@ class KFP_AddPOI(threading.Thread):
                                         self.sock.sendall('say \"[FF0000]' +
                                                           pseudo_poi +
                                                           ', sorry, your are not allowed to add a poi.\"')
+
             print u"Client arrêté. connexion interrompue."
             self.sock.close()
 
