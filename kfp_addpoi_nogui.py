@@ -216,7 +216,7 @@ class KFP_AddPOI(threading.Thread):
                                     if re.search(r'^[A-Za-z0-9Ü-ü_ \-]{3,25}$', poiname):
                                         pseudo_request = pseudo_poi
                                     else:
-                                        self.sock.sendAll('say \"[FF0000]' +
+                                        self.sock.sendall('say \"[FF0000]' +
                                                           pseudo_poi +
                                                           ', The Poi Name must contain between 3 ' +
                                                           'and 25 alphanumerics characters .\"')
