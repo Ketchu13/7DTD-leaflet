@@ -23,21 +23,16 @@
 # @author Nicolas Fortin github@nettrader.fr https://github.com/nicolas-f
 # @author Nicolas Grimaud ketchu13@hotmail.com https://github.com/ketchu13
 
-from Tkinter import *
 import ftplib as ftp
 from cStringIO import StringIO
-import getopt
 import os
-import re
 import socket
-import sys
 from threading import Timer
-from threading import Thread
 import threading
 import time
+import xml.etree.ElementTree as ET
 
 from libs.TabPages import *
-import xml.etree.ElementTree as ET
 
 
 class KFP_AddPOIGui(threading.Thread):
@@ -71,7 +66,7 @@ class KFP_AddPOIGui(threading.Thread):
 
     def __init__(self, parent):
         threading.Thread.__init__(self)
-        global fen
+        self.fen = self.AddPOI_GUI(self)
         self.parent = parent
         self.settings = self.parent.settings
 
@@ -92,9 +87,8 @@ class KFP_AddPOIGui(threading.Thread):
             print "You must define the leaflet poi list."
             exit(-1)
 
-        # sAddress = (self.settings['sIp'], int(self.settings['sPort']))
-        fen = self.AddPOI_GUI(self)
-        fen.start()
+    def run(self):
+        self.fen.start()
 
     def select_file(self, opts):
         try:
@@ -165,6 +159,7 @@ class KFP_AddPOIGui(threading.Thread):
                 print ("\tError in addpoi: ", e)
 
         def run(self):
+            print('\tThreadReception is running\n')
             server_pass = self.parent.parent.settings['sPass']
             whitelist_path = str(self.parent.parent.settings['wLPath'])
             adp = False
@@ -183,6 +178,7 @@ class KFP_AddPOIGui(threading.Thread):
                 data_received = data_received.decode(encoding='UTF-8', errors='ignore')
                 s1 = data_received.replace(b'\n', b'')
                 s2 = s1.split(b'\r')
+
                 if 'Please enter password:' in data_received:
                     self.parent.update('Connected...\nSending password...')
                     self.parent.sendAllData(server_pass)
@@ -466,10 +462,14 @@ class KFP_AddPOIGui(threading.Thread):
     class AddPOI_GUI(threading.Thread):
         def __init__(self, parent):
             threading.Thread.__init__(self)
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.parent = parent
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.th_R = self.parent.ThreadReception(self.sock, self)
+            print self.th_R.getName()
             self.rootM = Tk()
+
+        def run(self):
+            print "before thread reception"
             self.rootM.configure(bg='black')
             self.rootM.title = "ZBot lite py"
             self.tabPage = TabbedPageSet(self.rootM,
@@ -764,7 +764,7 @@ class KFP_AddPOIGui(threading.Thread):
                 self.sendAllData(self.entry_1.get())
 
         def sendAllData(self, value):
-            self.sock.sendall(value)
+            self.sock.sendall(value + '\n')
 
         def send_fin(self):
             self.button1.configure(text="Connect", command=self.connect)
@@ -802,11 +802,9 @@ class KFP_AddPOIGui(threading.Thread):
             self.button1.configure(text='Disconnect', command=self.send_fin)
             self.button2.configure(state='normal')
             self.update('Connecting to ' + self.parent.settings['telnet_server'])
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sadress = (self.entry4.get(), int(self.entry2.get()))
             self.sock.connect(sadress)
             self.update(u'Connexion établie avec le serveur.')
-            self.th_R = self.parent.ThreadReception(self.sock, self)
             self.th_R.start()
 
         def refresh_players_list(self):
@@ -826,9 +824,6 @@ class KFP_AddPOIGui(threading.Thread):
                 self.sock.send(self.value + '\n')
             except Exception as e:
                 print e
-
-    def run(self):
-        pass
 
     class getNameBySid(threading.Thread):
         def __init__(self, parent, value):
