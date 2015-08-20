@@ -26,10 +26,15 @@
 import os
 import re
 import socket
+import sys
 from threading import Timer
 import threading
 
 import xml.etree.ElementTree as ET
+
+maximumNumberOfThreads = 1
+threadLimiter = threading.BoundedSemaphore(maximumNumberOfThreads)
+threadLock = threading.Lock()
 
 
 class KFP_AddPOI(threading.Thread):
@@ -61,6 +66,7 @@ class KFP_AddPOI(threading.Thread):
         print " -b gui:\t\t Use Gui version (Optional)"
 
     def __init__(self, parent):
+        threadLimiter.acquire()
         threading.Thread.__init__(self)
         self.parent = parent
         self.settings = self.parent.settings
@@ -71,7 +77,8 @@ class KFP_AddPOI(threading.Thread):
                  "title": "Choose the Whiteliste that contain autorised users infos."})
         if len(self.settings['wLPath']) == 0:
             print "You must define the leaflet users whitelist."
-            exit(-1)
+            threadLimiter.release()
+            sys.exit(-1)
 
         if self.settings['poiPath'] is None:  # Show gui to select poi list.xml path
             self.settings['poiPath'] = self.select_file(
@@ -80,7 +87,8 @@ class KFP_AddPOI(threading.Thread):
 
         if len(self.settings['poiPath']) == 0:
             print "You must define the leaflet poi list."
-            exit(-1)
+            threadLimiter.release()
+            sys.exit(-1)
 
         self.parent = parent
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -168,6 +176,7 @@ class KFP_AddPOI(threading.Thread):
             loged = False
             pseudo_request = None
 
+            threadLock.acquire(0)
             print("ThreadReception receive loop started..")
             while not self.exiter:
                 """str_line = None
@@ -258,6 +267,7 @@ class KFP_AddPOI(threading.Thread):
                                                           pseudo_poi +
                                                           ', sorry, your are not allowed to add a poi.\"')
             print u"Client arrêté. connexion interrompue."
+            threadLock.release()
             self.sock.close()
 
     class GenUserMap(threading.Thread):
