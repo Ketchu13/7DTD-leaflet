@@ -49,10 +49,11 @@ class AdvancedMapReader(threading.Thread):
             for i in f:
                 i = i.strip()
                 if len(i) > 0:
-                    s = i.split("=")
-                    key = s[0].strip()
-                    value = s[1].strip()
-                    self.settings[key] = value
+                    if '#' not in i:
+                        s = i.split("=")
+                        key = s[0].strip()
+                        value = s[1].strip()
+                        self.settings[key] = value
         except IOError as e:
             print("ERROR: file ./config.kfp does not exist or is improperly formatted")
             print e
@@ -120,7 +121,7 @@ class AdvancedMapReader(threading.Thread):
             exit(-1)
 
         self.map_files = self.read_folder(self.settings['game_player_path'])
-
+        print len(self.settings['telnet_server'])
         if len(self.settings['telnet_server']) == 0:
             if len(self.map_files) == 0:
                 print "No .map files found in ", self.settings['game_player_path']
@@ -264,9 +265,9 @@ class AdvancedMapReader(threading.Thread):
         # Read and merge all tiles in .map files
         lastprint = 0
         for i, map_file in enumerate(player_map_path):
-            if time.time() - lastprint > 1:
-                print "Read map file ", os.path.basename(map_file), i + 1, "/", len(player_map_path)
-                lastprint = time.time()
+            #  if time.time() - lastprint > 1:
+            print "Read map file ", os.path.basename(map_file), i + 1, "/", len(player_map_path)
+            lastprint = time.time()
             try:
                 reader.import_file(map_file, False)
             except struct.error:
