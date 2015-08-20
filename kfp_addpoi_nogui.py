@@ -231,6 +231,7 @@ class KFP_AddPOI(threading.Thread):
                                 poiloc_y = int(float(user_location.split(', ')[0]))
                                 poiloc_x = int(float(user_location.split(', ')[2]))
                                 if self.parent.parent.settings['ignTrack']:
+                                    print "\tTracks.csv updated..."
                                     tracks = [(pseudo, poiloc_x, poiloc_y)]
                                     try:
                                         import csv

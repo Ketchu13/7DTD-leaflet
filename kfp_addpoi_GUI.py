@@ -248,7 +248,7 @@ class KFP_AddPOIGui(threading.Thread):
                                     tracks = [(pseudo, poiloc_x, poiloc_y)]
                                     try:
                                         import csv
-                                        tracks_path = os.path.join('.', 'players', 'tracks.csv')
+                                        tracks_path = os.path.join('players', 'tracks.csv')
                                         with open(tracks_path, 'ab') as f:
                                             w = csv.writer(f)
                                             w.writerows(tracks)
@@ -683,7 +683,7 @@ class KFP_AddPOIGui(threading.Thread):
             self.rootM.grid_rowconfigure(1, weight=1, minsize=200, pad=0)
 
             self.read_white_list(self.parent.parent.settings['wLPath'])
-            self.th_R.readPoi(self.parent.parent.settings['poiPath'])
+            # self.th_R.parent.readpoi(self.parent.parent.settings['poiPath'])
             self.textk1.focus()
             # self.readKL()
             self.rootM.mainloop()
@@ -764,10 +764,7 @@ class KFP_AddPOIGui(threading.Thread):
                 self.sendAllData(self.entry_1.get())
 
         def sendAllData(self, value):
-            s = self.parent.sendData(self.sock, value)
-            print s
-            s.start()
-            s.join()
+            self.sock.sendall(value)
 
         def send_fin(self):
             self.button1.configure(text="Connect", command=self.connect)
