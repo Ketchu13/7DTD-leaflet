@@ -93,8 +93,7 @@ class AdvancedMapReader(threading.Thread):
                 elif opt == "-b":
                     self.settings['GUI'] = value
                 elif opt == "-f":
-                    self.settings['FTPInfos'] = value
-            
+                    self.settings['FTPInfos'] = value            
         except getopt.error, msg:
             print "Map_reader> Error: {0}".format(str(msg))
             self.usage()
@@ -120,7 +119,6 @@ class AdvancedMapReader(threading.Thread):
             exit(-1)
 
         self.map_files = self.read_folder(self.settings['game_player_path'])
-        print len(self.settings['telnet_server'])
         if len(self.settings['telnet_server']) == 0:
             if len(self.map_files) == 0:
                 print 'Map_reader> No .map files found in ' + self.settings['game_player_path']
@@ -385,8 +383,6 @@ class AdvancedMapReader(threading.Thread):
         return self.map_files
 
     def copy_map_file(self, path, value):
-        print path
-        print value
         map_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Map')
         if not os.path.isdir(map_path):
             os.mkdir(map_path)
