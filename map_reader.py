@@ -55,13 +55,12 @@ class AdvancedMapReader(threading.Thread):
                         value = s[1].strip()
                         self.settings[key] = value
         except IOError as e:
-            print("ERROR: file ./config.kfp does not exist or is improperly formatted")
+            print("Map_reader> ERROR: file ./config.kfp does not exist or is improperly formatted")
             print e
 
         # parse command line options
         try:
             for opt, value in getopt.getopt(sys.argv[1:], "g:t:z:n:s:h:p:i:x:w:k:v:c:b:f:")[0]:
-                print value 
                 if opt == "-g":
                     self.settings['game_player_path'] = value
                 elif opt == "-t":
@@ -70,7 +69,7 @@ class AdvancedMapReader(threading.Thread):
                     self.settings['tile_zoom'] = int(value)
                 elif opt == "-n":
                     self.settings['store_history'] = True
-                    print "Store all version of tiles, may take huge disk space"
+                    print 'Map_reader> Store all version of tiles, may take huge disk space'
                 elif opt == "-s":
                     self.settings['telnet_server'] = value
                     self.settings['sIp'] = value.split(':')[0]
@@ -97,7 +96,7 @@ class AdvancedMapReader(threading.Thread):
                     self.settings['FTPInfos'] = value
             
         except getopt.error, msg:
-            print "Error: " + str(msg)
+            print "Map_reader> Error: {0}".format(str(msg))
             self.usage()
             raw_input()
             exit(-1)
@@ -117,24 +116,24 @@ class AdvancedMapReader(threading.Thread):
                 exit(-1)
 
         if len(self.settings['game_player_path']) == 0:
-            print "You must define the .map game path"
+            print "Map_reader> You must define the .map game path"
             exit(-1)
 
         self.map_files = self.read_folder(self.settings['game_player_path'])
         print len(self.settings['telnet_server'])
         if len(self.settings['telnet_server']) == 0:
             if len(self.map_files) == 0:
-                print "No .map files found in ", self.settings['game_player_path']
+                print 'Map_reader> No .map files found in ' + self.settings['game_player_path']
                 exit(-1)
             self.create_tiles(self.map_files, self.settings['tile_path'], self.settings['tile_zoom'], self.settings['store_history'])
         else:
             print self.settings['GUI']
             if self.settings['GUI'] == "gui":
-                print "start kpfAddpoigui thread"
+                print "Map_reader> start kpfAddpoigui thread"
                 th_addpoi = KFP_AddPOIGui(self)
                 th_addpoi.start()
             else:
-                print "start kpfAddpoi thread"
+                print "Map_reader> start kpfAddpoi thread"
                 th_addpoi = KFP_AddPOI(self)
                 th_addpoi.start()
             exit(-1)
@@ -201,7 +200,7 @@ class AdvancedMapReader(threading.Thread):
             with open(map_file, "rb") as curs:
                 # Check beginning of file
                 if not curs.read(4) == "map\0":
-                    print "Skip "+os.path.basename(map_file)+" wrong file header"
+                    print "Map_reader> Skip "+os.path.basename(map_file)+" wrong file header"
                     return
                 #  Read version
                 version = struct.unpack("I", curs.read(4))[0]
@@ -209,7 +208,7 @@ class AdvancedMapReader(threading.Thread):
                 if version == 2:
                     tiles_pos = 524300
                 else:
-                    print "Warning old map version: ", version
+                    print "Map_reader> Warning old map version: ", version
                     curs.seek(5)
                 #######################
                 # read index
@@ -230,7 +229,7 @@ class AdvancedMapReader(threading.Thread):
                                     self.new_tiles += 1
                             else:
                                 # Corrupted file
-                                print "Skip "+os.path.basename(map_file)+" may be already used by another process"
+                                print "Map_reader> Skip "+os.path.basename(map_file)+" may be already used by another process"
                                 break
                         else:
                             curs.seek(curs.tell() + 512)
@@ -266,12 +265,12 @@ class AdvancedMapReader(threading.Thread):
         lastprint = 0
         for i, map_file in enumerate(player_map_path):
             #  if time.time() - lastprint > 1:
-            print "Read map file ", os.path.basename(map_file), i + 1, "/", len(player_map_path)
+            print "Map_reader> Read map file ", os.path.basename(map_file), i + 1, "/", len(player_map_path)
             lastprint = time.time()
             try:
                 reader.import_file(map_file, False)
             except struct.error:
-                print "Skip "+map_file+" may be already used by another process in create_base_tiles"
+                print "Map_reader> Skip "+map_file+" may be already used by another process in create_base_tiles"
         # make zoom folder
         z_path = os.path.join(tile_output_path, str(tile_level))
         if not os.path.exists(z_path):
@@ -284,7 +283,7 @@ class AdvancedMapReader(threading.Thread):
         used_tiles = 0
         for x in range(2**tile_level):
             if time.time() - lastprint > 1:
-                print "Write tile X:", x + 1, " of ", 2**tile_level
+                print "Map_reader> Write tile X:", x + 1, " of ", 2**tile_level
                 lastprint = time.time()
             x_dir_make = False
             x_path = os.path.join(z_path, str(x - big_tile_range / 2))
@@ -309,7 +308,7 @@ class AdvancedMapReader(threading.Thread):
                             # Push this tile into the big one
                             big_tile.paste(tile_im, (tx * 16, ty * 16))
                         except ValueError:
-                            print "The following file is corrupted, skip it:\n" +\
+                            print "Map_reader> The following file is corrupted, skip it:\n" +\
                                   reader.tiles_file_path.get(self.index_from_xy(world_txy[0], world_txy[1]))
                 # All 16pix tiles of this big tile has been copied into big tile
                 # Time to save big tile
@@ -322,9 +321,9 @@ class AdvancedMapReader(threading.Thread):
                     png_path = os.path.join(x_path, str((big_tile_range - y) - big_tile_range / 2)+".png")
                     big_tile = ImageOps.flip(big_tile)
                     big_tile.save(png_path, "png")
-        print "Min max tiles minx:", minmax_tile[0][0], " maxx:", minmax_tile[1][0],\
+        print "Map_reader> Min max tiles minx:", minmax_tile[0][0], " maxx:", minmax_tile[1][0],\
               "miny:", minmax_tile[0][1], " maxy: ", minmax_tile[1][1]
-        print "Tiles used / total read", used_tiles, " / ", reader.new_tiles
+        print "Map_reader> Tiles used / total read", used_tiles, " / ", reader.new_tiles
 
     def create_low_zoom_tiles(self, tile_output_path, tile_level_native):
         """
@@ -344,7 +343,7 @@ class AdvancedMapReader(threading.Thread):
                     tiles_to_process.add((x_path, y_path))
             while len(tiles_to_process) > 0:
                 if time.time() - lastprint > 1:
-                    print "Zoom level ", tile_level - 1, ", ", len(tiles_to_process), " tiles left"
+                    print "Map_reader> Zoom level ", tile_level - 1, ", ", len(tiles_to_process), " tiles left"
                     lastprint = time.time()
                 tile_to_process = next(iter(tiles_to_process))
                 # compute id of origin tile
