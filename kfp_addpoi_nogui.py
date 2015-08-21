@@ -90,7 +90,6 @@ class KFP_AddPOI(threading.Thread):
             threadLimiter.release()
             sys.exit(-1)
 
-        self.parent = parent
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((self.settings['sIp'], int(self.settings['sPort'])))
         print 'Connection..Please wait..'
@@ -124,15 +123,25 @@ class KFP_AddPOI(threading.Thread):
 
         def refresh_players_list(self):
             try:
-                print('ThreadReception send lp every 5s\n')
+                print('\tThreadReception send lp every 5s')
                 self.sock.sendall('lp\n')
-                t = Timer(5.0, self.refresh_players_list)  # !! 5 Secondes !!
+                t = Timer(5.0, self.refresh_players_list)  # !! 5.0 Secondes !!
                 t.start()
             except Exception as e:
-                print "Error in refresh_player: " + str(e)
+                print "\tError in refresh_players_list: " + str(e)
+
+        def refresh_threads_list(self):
+            try:
+                print '\tThread actif: ' + str(threading.active_count())
+                for th in threading.enumerate():
+                    print str(th)
+                t = Timer(20.0, self.refresh_threads_list)  # !! 20.0 Secondes !!
+                t.start()
+            except Exception as e:
+                print "\tError in refresh_threads_list: " + str(e)
 
         @staticmethod
-        def writepoi(poilist_path, pseudo_request, sid, poiname, poi_location):
+        def writepoi(poilist_path, pseudo_request, sid, poiname, poi_location, poi_icon):
             try:
                 with open(poilist_path, "r") as f:
                     poilist_src = ''.join(f.readlines()[:-1])[:-1]
@@ -145,17 +154,27 @@ class KFP_AddPOI(threading.Thread):
                             '\" steamId=\"' + sid +
                             '\" pname=\"' + poiname +
                             '\" pos=\"' + poi_location +
-                            '\" icon=\"farm\" />\n' +
+                            '\" icon=\"' + poi_icon + '\"/>\n' +
                             '</poilist>')
                     print("\tPoi added and POIList.xml successfully saved..")
                 return True
             except IOError as e:
-                print ("Error in writepoi: ", e)
+                print ("\tError in writepoi: ", e)
                 return False
 
-        def addpoi(self, poilist_path, pseudo_request, sid, poiname, poi_location):
+        def addpoi(self, poilist_path, pseudo_request, sid, poiname, poi_location, poi_icon):
+            """
+            :param poilist_path: Path of the POIList.xml file.
+            :param pseudo_request: Pseudo of the user who request the add of a poi
+            :param sid: steamid of this user
+            :param poiname: Name of the poi
+            :param poi_location: Location of the poi
+            :param poi_icon: Icon of the poi on the leaflet map (optional default=farm)
+            # Todo Add color config
+            # Todo Add custom answers message config
+            """
             try:
-                if self.writepoi(poilist_path, pseudo_request, sid, poiname, poi_location):
+                if self.writepoi(poilist_path, pseudo_request, sid, poiname, poi_location, poi_icon):
                     self.sock.sendall('say \"[00FF00]' + pseudo_request +
                                       ', Poi Name: ' + poiname + ' added successfully.\"\n')
                 else:
@@ -165,7 +184,7 @@ class KFP_AddPOI(threading.Thread):
                 print ("\tError in addpoi: ", e)
 
         def run(self):
-            print 'Addpoi_no_gui run()..'
+            print '\tAddpoi_no_gui run()..'
             whitelist_path = str(self.parent.parent.settings['wLPath'])
             verbose = bool(self.parent.parent.settings['verbose'])
             server_pass = self.parent.parent.settings['sPass']
@@ -175,38 +194,44 @@ class KFP_AddPOI(threading.Thread):
             poiname = None
             loged = False
             pseudo_request = None
-
+            poi_icon = None
+            alloc_server = None
+            kfp_server = None
+            poi_icons_list = []
+            try:  # Todo move this block
+                with open("icons_list.kfp", "r") as f:
+                    poi_icons_list = f.readlines()
+            except IOError as e:
+                print(e)
             threadLock.acquire(0)
-            print("ThreadReception receive loop started..")
+            print("\tThreadReception receive loop started..")
             while not self.exiter:
-                """str_line = None
-                s1 = None
-                s2 = None"""
                 data_received = self.sock.recv(4096)
                 data_received = data_received.decode(encoding='UTF-8', errors='ignore')
                 s1 = data_received.replace(b'\n', b'')
                 s2 = s1.split(b'\r')
-
                 if 'Please enter password:' in data_received:  # connected with 7dtd server
                     self.sock.sendall(server_pass + '\n')
                 else:
                     for str_line in s2:
-                        #  print "str_line: " + str_line
                         if len(str_line) >= 5:
                             nn = 'Player disconnected: EntityID='
                             nn2 = ', PlayerID=\''
-                            if verbose:
+                            if verbose and 'Executing command' not in str_line:
                                 print str_line
                             if nn in str_line:  # check new player connection
                                 steamid = str_line[
                                           str_line.find(nn2) + len(nn2):str_line.find('\', OwnerID=\'')]  # get steamid
                                 mp = self.parent.GenUserMap(self.parent, steamid)  # gen this user tiles map
                                 mp.start()
+                            elif 'Mod Allocs server fixes' in str_line:
+                                alloc_server = True
+                            elif 'Mod KFP command extensions' in str_line:
+                                kfp_server = True
                             elif 'Logon successful.' in str_line and not loged:  # password ok
                                 loged = True
-                                self.sock.sendall('lp\n')  # request player list
+                                self.sock.sendall('version\n')
                                 self.refresh_players_list()  # add a timer fo refresh player list every X s
-
                             elif 'GMSG:' in str_line:  # receive a chat msg
                                 pseudo_temp = str_line[str_line.find('GMSG:') + 6:]
                                 msg_list = [' joined the game', ' left the game', ' killed player']
@@ -216,21 +241,37 @@ class KFP_AddPOI(threading.Thread):
                                         #  pseudo_event = pseudo_temp[:pseudo_temp.find(msg_list[ik])]
                                         if ik == 1:
                                             skip = True
-                                addpoi_cmd = '/addpoi'
+                                poi_cmd = '/addpoi'
                                 if skip:  # refresh players infos
                                     self.sock.sendall('lp\n')
-                                elif addpoi_cmd in str_line:
+                                elif poi_cmd in str_line:
                                     adp = True
                                     self.sock.sendall('lp\n')
                                     pseudo_poi = pseudo_temp[:pseudo_temp.find(': ')]
-                                    poiname = str_line[str_line.find(addpoi_cmd) + len(addpoi_cmd) + 1:]
-                                    if re.search(r'^[A-Za-z0-9Ü-ü_ \-]{3,25}$', poiname):
-                                        pseudo_request = pseudo_poi
-                                    else:
-                                        self.sock.sendAll('say \"[FF0000]' +
-                                                          pseudo_poi +
-                                                          ', The Poi Name must contain between 3 ' +
-                                                          'and 25 alphanumerics characters .\"')
+                                    if not pseudo_poi == 'Server':  # ignore server message
+                                        poiname = str_line[str_line.find(poi_cmd) + len(poi_cmd) + 1:]
+                                        poi_icon = poiname[poiname.rfind(' ') + 1:]
+                                        if poi_icon is None or (poi_icon + '\n') not in poi_icons_list:
+                                            poi_icon = 'farm'
+                                        if re.search(r'^[A-Za-z0-9Ü-ü_ \-]{3,25}$', poiname):
+                                            pseudo_request = pseudo_poi
+                                        else:
+                                            self.sock.sendall('say \"[FF0000]' +
+                                                              pseudo_poi +
+                                                              ', The Poi Name must contain between 3' +
+                                                              ' and 25 alphanumerics characters .\"\n')
+                                            self.sock.sendall('say \"[FF0000]' +
+                                                              pseudo_poi +
+                                                              'Ex: /addpoi <POI Name>' +
+                                                              ' <icon(Optional-default=farm)> \"\n')
+                                elif '/poihelp' in str_line:
+                                    self.sock.sendall(
+                                        'say \"[FF0000]Ex: /addpoi <POI Name>' +
+                                        ' <icon(Optional-default=farm)> \"\n')
+                                    self.sock.sendall(
+                                        'say \"[FF0000]Icons list: warehouse, farm, fire,' +
+                                        ' hospital, city, prison, bank, castel...\"\n')
+
                             elif '. id=' in str_line:
                                 i = str_line.find(', ')
                                 j = str_line.find(', pos=(')
@@ -242,6 +283,7 @@ class KFP_AddPOI(threading.Thread):
                                 poiloc_y = int(float(user_location.split(', ')[0]))
                                 poiloc_x = int(float(user_location.split(', ')[2]))
                                 if self.parent.parent.settings['ignTrack']:
+                                    print "\tTracks.csv updated..."
                                     tracks = [(pseudo, poiloc_x, poiloc_y)]
                                     try:
                                         import csv
@@ -259,13 +301,14 @@ class KFP_AddPOI(threading.Thread):
                                     for u in r.findall('user'):
                                         if u.get('steamId') == sid and u.get('rank') >= '1' and u.get('allowed') == '1':
                                             self.addpoi(poi_path, pseudo_request, sid, poiname, str(poiloc_x) + ", "
-                                                        + str(poiloc_y))
+                                                        + str(poiloc_y), poi_icon)
                                             allow = True
                                             break
                                     if not allow:
-                                        self.sock.sendall('say \"[FF0000]' +
+                                        self.sock.sendall("say \"[FF0000]" +
                                                           pseudo_poi +
-                                                          ', sorry, your are not allowed to add a poi.\"')
+                                                          ", sorry, your are not allowed to add a poi.\"\n")
+
             print u"Client arrêté. connexion interrompue."
             threadLock.release()
             self.sock.close()
