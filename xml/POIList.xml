@@ -4,6 +4,5 @@
 <poi sname="ketchu13" steamId="76561198009609645" pname="CumuHouse" pos="1124, -448" icon="farm" />
 <poi sname="ketchu13" steamId="76561198009609645" pname="Michal" pos="419, 1286" icon="farm" />
 <poi sname="ketchu13" steamId="76561198009609645" pname="test for Michal" pos="742, 1875" icon="farm" />
-<!--poi sname="ketchu13" steamId="76561198009609645" pname="test with icone" pos="1564, -3499" icon="warehouse"/>
-<poi sname="ketchu13" steamId="76561198009609645" pname="test with icon" pos="1564, -3499" icon="fire"/-->
+<poi sname="ketchu13" steamId="76561198009609645" pname="test with icon" pos="1564, -3499" icon="bank"/>
 </poilist>

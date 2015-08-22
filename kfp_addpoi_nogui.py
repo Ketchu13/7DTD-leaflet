@@ -260,8 +260,8 @@ class KFP_AddPOI(threading.Thread):
                                         'say \"[FF0000]Ex: /addpoi <POI Name>' +
                                         ' <icon(Optional-default=farm)> \"\n')
                                     self.sock.sendall(
-                                        'say \"[FF0000]Icons list: warehouse, farm, fire,' +
-                                        ' hospital, city, prison, bank, castel...\"\n')
+                                        'say \"[FF0000]Icons list: camp, hp, mapple,' +
+                                        ' wood, water, pyramid, bank, farm...\"\n')
 
                             elif '. id=' in str_line:
                                 i = str_line.find(', ')
