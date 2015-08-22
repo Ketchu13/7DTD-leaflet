@@ -29,7 +29,6 @@ import socket
 import sys
 from threading import Timer
 import threading
-
 import xml.etree.ElementTree as ET
 
 maximumNumberOfThreads = 1
@@ -115,6 +114,7 @@ class KFP_AddPOI(threading.Thread):
             self.parent = parent
             self.exiter = False
             print('ThreadReception __inited__...')  # print "receive thread"
+            self.marker_list = self.list_poi_icons('')
 
         def exite(self):
             if not self.exiter:
@@ -162,6 +162,29 @@ class KFP_AddPOI(threading.Thread):
                 print ("\tError in writepoi: ", e)
                 return False
 
+        @staticmethod
+        def list_poi_icons(path):
+            try:
+                if path is None or len(path) <= 0:
+                    path = r'./images/marker_kfp_7dtd/'
+                marker_files = [marker_files for marker_files in os.listdir(path) if marker_files.endswith(".png")]
+                print marker_files
+                return marker_files
+            except IOError as e:
+                print e
+
+        def poi_icons_exist(self,name):
+            try:
+                if name is None:
+                    return False
+                for icons in self.marker_list:
+                    if icons == name + '.png':
+                        return True
+                return False
+            except:
+                print "Error in poi_icons_exist..."
+                return False
+
         def addpoi(self, poilist_path, pseudo_request, sid, poiname, poi_location, poi_icon):
             """
             :param poilist_path: Path of the POIList.xml file.
@@ -197,14 +220,9 @@ class KFP_AddPOI(threading.Thread):
             poi_icon = None
             alloc_server = None
             kfp_server = None
-            poi_icons_list = []
-            try:  # Todo move this block
-                with open("icons_list.kfp", "r") as f:
-                    poi_icons_list = f.readlines()
-            except IOError as e:
-                print(e)
             threadLock.acquire(0)
             print("\tThreadReception receive loop started..")
+
             while not self.exiter:
                 data_received = self.sock.recv(4096)
                 data_received = data_received.decode(encoding='UTF-8', errors='ignore')
@@ -251,7 +269,7 @@ class KFP_AddPOI(threading.Thread):
                                     if not pseudo_poi == 'Server':  # ignore server message
                                         poiname = str_line[str_line.find(poi_cmd) + len(poi_cmd) + 1:]
                                         poi_icon = poiname[poiname.rfind(' ') + 1:]
-                                        if poi_icon is None or (poi_icon + '\n') not in poi_icons_list:
+                                        if poi_icon is None or not self.poi_icons_exist(poi_icon):
                                             poi_icon = 'farm'
                                         if re.search(r'^[A-Za-z0-9Ü-ü_ \-]{3,25}$', poiname):
                                             pseudo_request = pseudo_poi
@@ -269,7 +287,7 @@ class KFP_AddPOI(threading.Thread):
                                         'say \"[FF0000]Ex: /addpoi <POI Name>' +
                                         ' <icon(Optional-default=farm)> \"\n')
                                     self.sock.sendall(
-                                        'say \"[FF0000]Icons list: warehouse, farm, fire,' +
+                                        'say \"[FF0000]Icons list: house, farm, fire,' +
                                         ' hospital, city, prison, bank, castel...\"\n')
 
                             elif '. id=' in str_line:
@@ -282,6 +300,7 @@ class KFP_AddPOI(threading.Thread):
                                 user_location = loc_temp[:loc_temp.find('), rot')]
                                 poiloc_y = int(float(user_location.split(', ')[0]))
                                 poiloc_x = int(float(user_location.split(', ')[2]))
+
                                 if self.parent.parent.settings['ignTrack']:
                                     print "\tTracks.csv updated..."
                                     tracks = [(pseudo, poiloc_x, poiloc_y)]
@@ -293,6 +312,7 @@ class KFP_AddPOI(threading.Thread):
                                             w.writerows(tracks)
                                     except Exception as e:
                                         print e
+
                                 if adp and pseudo_request == pseudo and pseudo_request is not None:
                                     adp = False
                                     t = ET.parse(whitelist_path)
