@@ -107,6 +107,7 @@ class KFP_AddPOI(threading.Thread):
             self.parent = parent
             self.exiter = False
             print('ThreadReception __inited__...')  # print "receive thread"
+            self.marker_list = self.list_poi_icons('')
 
         def exite(self):
             if not self.exiter:
@@ -154,6 +155,29 @@ class KFP_AddPOI(threading.Thread):
                 print ("\tError in writepoi: ", e)
                 return False
 
+        @staticmethod
+        def list_poi_icons(path):
+            try:
+                if path is None or len(path) <= 0:
+                    path = r'./images/marker_kfp_7dtd/'
+                marker_files = [marker_files for marker_files in os.listdir(path) if marker_files.endswith(".png")]
+                print marker_files
+                return marker_files
+            except IOError as e:
+                print e
+
+        def poi_icons_exist(self,name):
+            try:
+                if name is None:
+                    return False
+                for icons in self.marker_list:
+                    if icons == name + '.png':
+                        return True
+                return False
+            except:
+                print "Error in poi_icons_exist..."
+                return False
+
         def addpoi(self, poilist_path, pseudo_request, sid, poiname, poi_location, poi_icon):
             """
             :param poilist_path: Path of the POIList.xml file.
@@ -189,13 +213,8 @@ class KFP_AddPOI(threading.Thread):
             poi_icon = None
             alloc_server = None
             kfp_server = None
-            poi_icons_list = []
-            try:  # Todo move this block
-                with open("icons_list.kfp", "r") as f:
-                    poi_icons_list = f.readlines()
-            except IOError as e:
-                print(e)
             print("\tThreadReception receive loop started..")
+
             while not self.exiter:
                 data_received = self.sock.recv(4096)
                 data_received = data_received.decode(encoding='UTF-8', errors='ignore')
@@ -242,7 +261,7 @@ class KFP_AddPOI(threading.Thread):
                                     if not pseudo_poi == 'Server':  # ignore server message
                                         poiname = str_line[str_line.find(poi_cmd) + len(poi_cmd) + 1:]
                                         poi_icon = poiname[poiname.rfind(' ') + 1:]
-                                        if poi_icon is None or (poi_icon + '\n') not in poi_icons_list:
+                                        if poi_icon is None or not self.poi_icons_exist(poi_icon):
                                             poi_icon = 'farm'
                                         if re.search(r'^[A-Za-z0-9Ü-ü_ \-]{3,25}$', poiname):
                                             pseudo_request = pseudo_poi
