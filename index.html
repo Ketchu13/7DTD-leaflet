@@ -7,8 +7,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
         <link rel="stylesheet" href="css/leaflet.css"/>
+         //*****************************************************ketchu13
         <link rel="stylesheet" href="css/github_n_f.css"/>
-        <--link rel="stylesheet" href="css/bitbucket_n_g.css"/-->
+        <link rel="stylesheet" href="css/bitbucket_n_g.css"/>
+         //*****************************************************/ketchu13
         <link rel="stylesheet" href="css/L.Control.MousePosition.css"/>
         <link rel="stylesheet" href="css/toggle.css"/>
         <style>
@@ -18,12 +20,12 @@
     </head>
     <body>
      <!--=======repository======-->
-        <span id="forkonbitbucket">
+        <!--span id="forkonbitbucket">
             <a href="https://bitbucket.org/nicolas_g/kfp_7dtd_leaflet">
             <span style='color: #f00;'>KFP version</span> on BitBucket </a>
-        </span>
+        </span-->
         <span id="forkongithub">
-            <a href="https://github.com/Ketchu13/7DTD-leafle">Fork us on GitHub</a>
+            <a href="https://github.com/nicolas-f/7DTD-leaflet">Fork us on GitHub</a>
         </span>
     <!--=======end======-->
     <nav id='menu-ui' class='menu-ui'></nav>
@@ -31,9 +33,9 @@
     <script src="js/leaflet.js"></script>
     <script src='js/leaflet-omnivore.min.js'></script>
     <script src='js/L.Control.MousePosition.js'></script>
-    //*****************************************************k13
+    //*****************************************************ketchu13
     <script src="js/XmlToGeoJSON.js"></script>
-    //*****************************************************/k13
+    //*****************************************************/ketchu13
     <script>
     native_zoom_level = 8;
 
@@ -159,7 +161,7 @@
         };
 
         addLayer(canvasTiles, 'Region tiles', 2, false);
-    //***********************************************************************************************************************k13
+    //***********************************************************************************************************************ketchu13
         var AllPOI = L.geoJson(ShowPOILocation(), {
             pointToLayer: function (feature, latlng) {
             if (feature.properties && feature.properties.popupContent) {
@@ -174,283 +176,6 @@
         addLayer(AllPOI, 'All Signaled POI', 3, true);//kersma.addTo(map);
 
         function onEachFeature(feature, layer) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                         if (feature.properties && feature.properties.popupContent) {
                             var popupContent = popupcontent(feature.properties.entity, feature.properties.popupContent);
                             layer.bindPopup(popupContent);
@@ -461,7 +186,7 @@
                         popupContent += content + '</div>';
                         return popupContent;
         }
-    //*************************************************************************************************************************/k13
+    //*************************************************************************************************************************/ketchu13
         function addLayer(layer, name, zIndex, active) {
             if(active) {
                 layer
@@ -492,36 +217,4 @@
         }
     </script>
     </body>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 </html>
