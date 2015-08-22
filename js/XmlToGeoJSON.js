@@ -1,7 +1,80 @@
-var farm = L.icon({
-  iconUrl: './images/marker/farm.png',
+var house = L.icon({
+  iconUrl: './images/marker_kfp_7dtd/keystone1.png',
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+  popupAnchor: [0, -10]
+});
+var user = L.icon({
+  iconUrl: './images/marker_kfp_7dtd/user.png',
+  iconSize: [16, 24],
+  iconAnchor: [8, 12],
+  popupAnchor: [0, -10]
+});
+var userOff = L.icon({
+  iconUrl: './images/marker_kfp_7dtd/userOff.png',
+  iconSize: [16, 24],
+  iconAnchor: [8, 12],
+  popupAnchor: [0, -10]
+});
+var POIic = L.icon({
+  iconUrl: './images/marker_kfp_7dtd/fire.png',
+  iconSize: [16, 24],
+  iconAnchor: [8, 12],
+  popupAnchor: [0, -10]
+});
+var hot = POIic;
+var house2 = L.icon({
+  iconUrl: './images/marker_kfp_7dtd/house2.png',
   iconSize: [22, 22],
   iconAnchor: [11, 11],
+  popupAnchor: [0, -10]
+});
+var farm = L.icon({
+  iconUrl: './images/marker_kfp_7dtd/farm.png',
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+  popupAnchor: [0, -10]
+});
+var bank = L.icon({
+  iconUrl: './images/marker_kfp_7dtd/bank.png',
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+  popupAnchor: [0, -10]
+});
+var pyramid = L.icon({
+  iconUrl: './images/marker_kfp_7dtd/pyramid.png',
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+  popupAnchor: [0, -10]
+});
+var water = L.icon({
+  iconUrl: './images/marker_kfp_7dtd/water.png',
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+  popupAnchor: [0, -10]
+});
+var wood = L.icon({
+  iconUrl: './images/marker_kfp_7dtd/wood.png',
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+  popupAnchor: [0, -10]
+});
+var mapple = L.icon({
+  iconUrl: './images/marker_kfp_7dtd/mapple.png',
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+  popupAnchor: [0, -10]
+});
+var hp = L.icon({
+  iconUrl: './images/marker_kfp_7dtd/hp.png',
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+  popupAnchor: [0, -10]
+});
+var camp = L.icon({
+  iconUrl: './images/marker_kfp_7dtd/camp.png',
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
   popupAnchor: [0, -10]
 });
 var LineStyle = {
