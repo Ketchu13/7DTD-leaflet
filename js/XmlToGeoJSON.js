@@ -17,7 +17,7 @@ var userOff = L.icon({
   popupAnchor: [0, -10]
 });
 var POIic = L.icon({
-  iconUrl: './images/marker_kfp_7dtd/POI.png',
+  iconUrl: './images/marker_kfp_7dtd/fire.png',
   iconSize: [16, 24],
   iconAnchor: [8, 12],
   popupAnchor: [0, -10]
