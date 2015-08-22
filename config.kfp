@@ -1,6 +1,6 @@
 #do not add telnett_server=<ip:port> arg if you want to launch
-#	only the leaflet tiles map generations
-Ip=127.0.0.1
+#    only the leaflet tiles map generations
+sIp=127.0.0.1
 sPort=8081
 sPass=CHANGEME
 wLPath=./xml/POIwhitelist.xml
