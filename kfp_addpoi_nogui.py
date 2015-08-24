@@ -58,7 +58,7 @@ class KFP_AddPOI(threading.Thread):
         print " -c \"www\":\t\t The folder that contain your index.html (Optional)"
         print " -newest Keep track of updates and write the last version of tiles. This will show players bases on map.(Optional)"
         print " -b gui:\t\t Use Gui version (Optional)"
-        print " -f FTPHost:UserName:PassWord \t FTP server connection infos (Optional)"
+
 
     def __init__(self, parent):
         threading.Thread.__init__(self)
@@ -186,9 +186,10 @@ class KFP_AddPOI(threading.Thread):
             :param poiname: Name of the poi
             :param poi_location: Location of the poi
             :param poi_icon: Icon of the poi on the leaflet map (optional default=farm)
+            """
             # Todo Add color config
             # Todo Add custom answers message config
-            """
+            # Todo check if a poi exist arround this location
             try:
                 if self.writepoi(poilist_path, pseudo_request, sid, poiname, poi_location, poi_icon):
                     self.sock.sendall('say \"[00FF00]' + pseudo_request +
@@ -211,6 +212,8 @@ class KFP_AddPOI(threading.Thread):
             loged = False
             pseudo_request = None
             poi_icon = None
+            # Todo use say or pm for server chat answers
+            # Todo Parse GMSG or Kfp Hooked chat msg
             alloc_server = None
             kfp_server = None
             print("\tThreadReception receive loop started..")
@@ -230,24 +233,30 @@ class KFP_AddPOI(threading.Thread):
                             if verbose and 'Executing command' not in str_line:
                                 print str_line
                             if nn in str_line:  # check new player connection
+                                # Todo check args opts
                                 steamid = str_line[
                                           str_line.find(nn2) + len(nn2):str_line.find('\', OwnerID=\'')]  # get steamid
                                 mp = self.parent.GenUserMap(self.parent, steamid)  # gen this user tiles map
+                                # Todo add queue or use timer for read Map folder
                                 mp.start()
-                            elif 'Mod Allocs server fixes' in str_line:
-                                alloc_server = True
+                            elif 'Mod Allocs server fixes' in str_line: # Todo add string in config file
+                                alloc_server = True  # Todo Parse GMSG and use Pm for answers
                             elif 'Mod KFP command extensions' in str_line:
-                                kfp_server = True
+                                kfp_server = True  # Todo parse hooked chat
                             elif 'Logon successful.' in str_line and not loged:  # password ok
                                 loged = True
                                 self.sock.sendall('version\n')
                                 self.refresh_players_list()  # add a timer fo refresh player list every X s
+                            elif 'Total of 0 in the game.' in str_line:  # No ply connected
+                                pass
+                                # Todo Set NoPlayerConnected = True Stop refresh_list
                             elif 'GMSG:' in str_line:  # receive a chat msg
                                 pseudo_temp = str_line[str_line.find('GMSG:') + 6:]
                                 msg_list = [' joined the game', ' left the game', ' killed player']
                                 skip = False
                                 for ik in range(0, len(msg_list)):  # parse server chat message
                                     if msg_list[ik] in str_line:
+                                        # Todo Set NoPlayerConnected = False do refresh_list
                                         #  pseudo_event = pseudo_temp[:pseudo_temp.find(msg_list[ik])]
                                         if ik == 1:
                                             skip = True
