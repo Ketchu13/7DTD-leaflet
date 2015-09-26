@@ -143,7 +143,7 @@ class KFP_AddPOI(threading.Thread):
                         print("\tPOIList.xml successfully loaded..")
                 with open(poilist_path, "r+") as f:
                     f.write(poilist_src + '\n' +
-                            '<poi sname=\"' + pseudo_request +
+                            '<poi userName=\"' + pseudo_request +
                             '\" steamId=\"' + sid +
                             '\" pname=\"' + poiname +
                             '\" pos=\"' + poi_location +

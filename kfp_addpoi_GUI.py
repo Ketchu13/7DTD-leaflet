@@ -132,7 +132,7 @@ class KFP_AddPOIGui(threading.Thread):
                         poilist_src = '<poilist>\n'
                         print("\tPOIList.xml successfully loaded..")
                 with open(poilist_path, "r+") as f:
-                    str_poi = '<poi sname=\"' + pseudo_request + \
+                    str_poi = '<poi userName=\"' + pseudo_request + \
                               '\" steamId=\"' + sid + \
                               '\" pname=\"' + poiname + \
                               '\" pos=\"' + poi_location + \

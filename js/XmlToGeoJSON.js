@@ -108,10 +108,10 @@ function ShowPOILocation() {
                     var steamId = pois[j].getAttribute("steamId");
                     var lpblock = pois[j].getAttribute("pos").split(",");
                     var pname =  pois[j].getAttribute("pname");
-                    var sname =  pois[j].getAttribute("sname");
+                    var userName =  pois[j].getAttribute("userName");
                     var icone =  pois[j].getAttribute("icon");
                     var name = pois[j].getAttribute("name");
-                        var ct = escapeHTML(pname) + "<br>Signaled by " + escapeHTML(sname);
+                        var ct = escapeHTML(pname) + "<br>Signaled by " + escapeHTML(userName);
                         var prop0 = {
                             "icon": window[icone],
                             "popupContent": ct,
